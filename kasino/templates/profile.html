@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NEO-PROFILE</title>
+    <style>
+        :root { --neon: #bc13fe; --accent: #00f2ff; --green: #00ff88; --gold: #ffd700; --red: #ff0055; --glass: rgba(255, 255, 255, 0.05); --border: rgba(255, 255, 255, 0.1); }
+        body {
+            background: radial-gradient(circle at 50% 50%, #1a0b2e 0%, #05010a 100%);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        .nav {
+            width: 100%;
+            padding: 15px 40px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 30px;
+        }
+
+        .profile-sidebar {
+            background: var(--glass);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .avatar-large {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            border: 3px solid var(--accent);
+            object-fit: cover;
+            margin-bottom: 20px;
+            background: rgba(0,0,0,0.5);
+            box-shadow: 0 0 30px rgba(0,242,255,0.3);
+        }
+
+        .username {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+
+        .balance-display {
+            font-size: 32px;
+            color: var(--gold);
+            font-weight: bold;
+            margin: 20px 0;
+            font-family: monospace;
+            text-shadow: 0 0 15px rgba(255,215,0,0.4);
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border-radius: 12px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+            font-size: 14px;
+            margin: 5px;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--neon), #7000ff);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--green), #00a859);
+            color: #000;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--red), #ff4400);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        .content-area {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .card {
+            background: var(--glass);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 25px;
+        }
+
+        .card-title {
+            color: var(--accent);
+            font-size: 18px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            color: #aaa;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: white;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .file-input {
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            border: 2px dashed rgba(255,255,255,0.2);
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .file-input:hover {
+            border-color: var(--accent);
+        }
+
+        .history-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .history-game {
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .history-win {
+            color: var(--green);
+            font-weight: bold;
+        }
+
+        .history-loss {
+            color: var(--red);
+        }
+
+        .flex-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .flex-row > * {
+            flex: 1;
+        }
+
+        .time-text {
+            color: #888;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .back-to-hub {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 10px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            transition: 0.3s;
+        }
+
+        .back-to-hub:hover {
+            background: var(--accent);
+            color: #000;
+            box-shadow: 0 0 20px var(--accent);
+        }
+
+        .history-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .history-container.expanded {
+            max-height: none;
+        }
+
+        .expand-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+
+        .expand-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <button onclick="location.href='/hub'" style="background: rgba(255,255,255,0.1); border:1px solid var(--border); color:#ccc; cursor:pointer; padding:8px 20px; border-radius:8px;">⬅ {{ t.back_to_hub|upper }}</button>
+        <div style="font-weight: bold; color: var(--accent); font-size: 20px; letter-spacing: 2px;">NEO-PULSE <span style="color:white">{{ t.profile|upper }}</span></div>
+        <a href="/logout" style="color: #ff0055; text-decoration: none; font-size: 11px; font-weight: bold; border: 1px solid #ff0055; padding: 8px 12px; border-radius: 10px; transition: 0.3s;">{{ t.logout|upper }}</a>
+    </div>
+
+    <div class="container">
+        <div class="profile-sidebar">
+            <img src="/avatar/{{ user }}" class="avatar-large" alt="Avatar" id="avatarImg" onerror="this.src='/static/default_avatar.png'">
+
+            <div class="username">{{ user }}</div>
+            <div style="color: #888; font-size: 12px; margin-bottom: 20px;">ID: {{ user }}</div>
+
+            <div class="balance-display" id="balanceDisplay">₽{{ balance_display }}</div>
+
+            <a href="/hub" class="back-to-hub">
+                <span>🏠 {{ t.back_to_hub|upper }}</span>
+            </a>
+        </div>
+
+        <div class="content-area">
+            <div class="card">
+                <div class="card-title">🖼️ {{ t.avatar|upper }}</div>
+                <form id="avatarForm">
+                    <div class="input-group">
+                        <label for="avatarFile">{{ t.choose_file }} (PNG, JPG, GIF, до 16MB)</label>
+                        <input type="file" id="avatarFile" name="avatar" accept=".png,.jpg,.jpeg,.gif,.webp" class="file-input" onchange="previewAvatar()">
+                    </div>
+                    <button type="button" onclick="uploadAvatar()" class="btn btn-success">{{ t.upload_avatar|upper }}</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-title">⚙️ {{ t.settings|upper }}</div>
+
+                <div class="input-group">
+                    <label>{{ t.language|upper }}</label>
+                    <select id="languageSelect" onchange="changeLanguage()">
+                        <option value="en" {% if current_language == 'en' %}selected{% endif %}>English</option>
+                        <option value="ru" {% if current_language == 'ru' %}selected{% endif %}>Русский</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">💰 {{ t.balance|upper }}</div>
+                <div class="flex-row">
+                    <div class="input-group">
+                        <label>{{ t.deposit_amount|upper }} (₽)</label>
+                        <input type="number" id="depositAmount" placeholder="0" min="100">
+                        <small style="color: #888;">{{ t.min_deposit }}: 100₽</small>
+                    </div>
+                    <button onclick="makeDeposit()" class="btn btn-success">{{ t.deposit|upper }}</button>
+                </div>
+
+                <div class="flex-row">
+                    <div class="input-group">
+                        <label>{{ t.withdraw_amount|upper }} (₽)</label>
+                        <input type="number" id="withdrawAmount" placeholder="0" min="4000">
+                        <small style="color: #888;">{{ t.min_withdraw }}: 4000₽</small>
+                    </div>
+                    <button onclick="makeWithdraw()" class="btn btn-danger">{{ t.withdraw|upper }}</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">🔐 {{ t.security|upper }}</div>
+                <div class="input-group">
+                    <label>{{ t.current_password|upper }}</label>
+                    <input type="password" id="currentPassword" placeholder="{{ t.current_password }}">
+                </div>
+                <div class="input-group">
+                    <label>{{ t.new_password|upper }}</label>
+                    <input type="password" id="newPassword" placeholder="{{ t.new_password }}">
+                </div>
+                <div class="input-group">
+                    <label>{{ t.confirm_password|upper }}</label>
+                    <input type="password" id="confirmPassword" placeholder="{{ t.confirm_password }}">
+                </div>
+                <button onclick="changePassword()" class="btn btn-primary">{{ t.change_password|upper }}</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📊 {{ t.game_history|upper }}</div>
+                <div class="history-container" id="historyContainer">
+                    <div id="gameHistory">
+                        {% for game in game_history %}
+                        <div class="history-item">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                <span class="history-game">{{ game.game|upper }}</span>
+                                <span style="color: #888; font-size: 9px;">{{ game.timestamp|format_datetime }}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>{{ t.place_bet }}: <strong>₽{{ game.bet|round|int }}</strong></span>
+                                {% if game.result == 'win' %}
+                                <span class="history-win">{{ t.win }}: ₽{{ game.win|round|int }}</span>
+                                {% else %}
+                                <span class="history-loss">{{ t.loss }}</span>
+                                {% endif %}
+                            </div>
+                            {% if game.details %}
+                            <div class="time-text">{{ game.details }}</div>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <div style="text-align: center; color: #888; padding: 20px;">{{ t.no_history }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <button class="expand-btn" id="expandBtn" onclick="toggleHistory()">{{ t.expand_history|upper }}</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isExpanded = false;
+
+        function previewAvatar() {
+            const fileInput = document.getElementById('avatarFile');
+            const avatarImg = document.getElementById('avatarImg');
+
+            if (fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    avatarImg.src = e.target.result;
+                }
+                reader.readAsDataURL(fileInput.files[0]);
+            }
+        }
+
+        async function uploadAvatar() {
+            const fileInput = document.getElementById('avatarFile');
+            if (!fileInput.files[0]) {
+                alert('{{ t.choose_file }}');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('avatar', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/upload_avatar', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    alert('Avatar uploaded!');
+                    document.getElementById('avatarImg').src = `/avatar/{{ user }}?t=${Date.now()}`;
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                alert('Network error');
+            }
+        }
+
+        async function changeLanguage() {
+            const lang = document.getElementById('languageSelect').value;
+
+            try {
+                const response = await fetch('/update_profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ language: lang })
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                alert('Network error');
+            }
+        }
+
+        async function makeDeposit() {
+            const amount = document.getElementById('depositAmount').value;
+            if (!amount || amount < 100) {
+                alert('{{ t.min_deposit }}: 100₽');
+                return;
+            }
+
+            try {
+                const response = await fetch('/deposit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: parseFloat(amount) })
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    alert(`Deposit successful! You need to pay: ₽${result.amount_to_pay} (Fee: ₽${result.fee})`);
+                    updateBalanceDisplay(result.balance_display);
+                    document.getElementById('depositAmount').value = '';
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                alert('{{ t.network_error }}');
+            }
+        }
+
+        async function makeWithdraw() {
+            const amount = document.getElementById('withdrawAmount').value;
+            if (!amount || amount < 4000) {
+                alert('{{ t.min_withdraw }}: 4000₽');
+                return;
+            }
+
+            try {
+                const response = await fetch('/withdraw', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: parseFloat(amount) })
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    alert(`Withdrawal successful! You will receive: ₽${result.amount_to_receive}`);
+                    updateBalanceDisplay(result.balance_display);
+                    document.getElementById('withdrawAmount').value = '';
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                alert('{{ t.network_error }}');
+            }
+        }
+
+        async function changePassword() {
+            const currentPass = document.getElementById('currentPassword').value;
+            const newPass = document.getElementById('newPassword').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
+
+            if (!currentPass || !newPass || !confirmPass) {
+                alert('{{ t.fill_all_fields }}');
+                return;
+            }
+
+            if (newPass !== confirmPass) {
+                alert('Passwords do not match');
+                return;
+            }
+
+            if (newPass.length < 4) {
+                alert('Password must be at least 4 characters');
+                return;
+            }
+
+            try {
+                const response = await fetch('/update_profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        current_password: currentPass,
+                        new_password: newPass
+                    })
+                });
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    alert('Password changed!');
+                    document.getElementById('currentPassword').value = '';
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                alert('{{ t.network_error }}');
+            }
+        }
+
+        async function toggleHistory() {
+            const container = document.getElementById('historyContainer');
+            const btn = document.getElementById('expandBtn');
+
+            if (!isExpanded) {
+                try {
+                    const response = await fetch('/get_full_history');
+                    const result = await response.json();
+
+                    if (result.status === 'success') {
+                        const historyDiv = document.getElementById('gameHistory');
+                        historyDiv.innerHTML = '';
+
+                        result.history.forEach(game => {
+                            const item = document.createElement('div');
+                            item.className = 'history-item';
+                            item.innerHTML = `
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span class="history-game">${game.game.toUpperCase()}</span>
+                                    <span style="color: #888; font-size: 9px;">${new Date(game.timestamp).toLocaleString()}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span>Bet: <strong>₽${Math.round(game.bet)}</strong></span>
+                                    ${game.result === 'win' ? 
+                                        `<span class="history-win">Win: ₽${Math.round(game.win)}</span>` : 
+                                        `<span class="history-loss">Loss</span>`}
+                                </div>
+                                ${game.details ? `<div class="time-text">${game.details}</div>` : ''}
+                            `;
+                            historyDiv.appendChild(item);
+                        });
+
+                        container.classList.add('expanded');
+                        btn.textContent = '{{ t.collapse_history|upper }}';
+                        isExpanded = true;
+                    }
+                } catch (error) {
+                    alert('Error loading history');
+                }
+            } else {
+                container.classList.remove('expanded');
+                btn.textContent = '{{ t.expand_history|upper }}';
+                isExpanded = false;
+            }
+        }
+
+        function updateBalanceDisplay(balance) {
+            document.getElementById('balanceDisplay').textContent = '₽' + Math.round(balance);
+        }
+
+        async function updateBalance() {
+            try {
+                const response = await fetch('/get_balance');
+                const result = await response.json();
+                if (result.balance_display !== undefined) {
+                    updateBalanceDisplay(result.balance_display);
+                }
+            } catch (error) {
+                console.log('Balance update error');
+            }
+        }
+
+        setInterval(updateBalance, 5000);
+    </script>
+</body>
+</html>

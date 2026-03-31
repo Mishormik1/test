@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>NEO-ARENA</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        :root { 
+            --neon: #bc13fe; 
+            --accent: #00f2ff; 
+            --green: #00ff88; 
+            --red: #ff0055; 
+            --gold: #ffd700; 
+            --orange: #ff8800;
+            --dark: #05010a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background: var(--dark); 
+            font-family: 'Inter', sans-serif; 
+            color: white; 
+            background: radial-gradient(circle at 50% 50%, #1a0b2e 0%, #05010a 100%);
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .nav { 
+            width: 100%; 
+            padding: 15px 40px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            background: rgba(0, 0, 0, 0.6); 
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--border);
+            position: fixed;
+            top: 0;
+            z-index: 1000;
+            height: 80px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .avatar-arena {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid var(--accent);
+            object-fit: cover;
+        }
+
+        .game-container {
+            display: flex;
+            width: 100vw;
+            height: calc(100vh - 80px);
+            margin-top: 80px;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .left-panel {
+            width: 400px;
+            background: var(--glass);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100%;
+            animation: slideInLeft 0.6s ease-out;
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .arena-container {
+            flex: 1;
+            position: relative;
+            border: 2px solid var(--neon);
+            border-radius: 20px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.5);
+            min-height: 100%;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #arena-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .arena-timer {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 60px;
+            font-weight: 900;
+            color: var(--accent);
+            text-shadow: 0 0 20px var(--accent);
+            font-family: 'Orbitron', monospace;
+            z-index: 100;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.05); }
+        }
+
+        .right-panel {
+            width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            animation: slideInRight 0.6s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .bets-section {
+            flex: 1;
+            background: var(--glass);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .wins-section {
+            flex: 1;
+            background: var(--glass);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .section-title {
+            color: var(--accent);
+            font-size: 18px;
+            margin-bottom: 15px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .section-title.orange {
+            color: var(--orange);
+        }
+
+        .section-title.green {
+            color: var(--green);
+        }
+
+        .bet-values {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 15px 0;
+        }
+
+        .bet-chip {
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: #ccc;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .bet-chip:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+
+        .bet-chip.active {
+            border-color: var(--orange);
+            color: var(--orange);
+            box-shadow: 0 0 10px var(--orange);
+            background: rgba(255, 136, 0, 0.1);
+            animation: glow 1.5s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 10px var(--orange); }
+            50% { box-shadow: 0 0 20px var(--orange); }
+        }
+
+        .teams-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .team-btn {
+            height: 70px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            font-size: 12px;
+            text-align: center;
+            padding: 5px;
+            white-space: nowrap;
+        }
+
+        .team-btn:hover {
+            transform: scale(1.05);
+            filter: brightness(1.2);
+        }
+
+        .team-btn.selected {
+            border-color: white;
+            box-shadow: 0 0 15px white;
+            animation: teamGlow 1s ease-in-out infinite;
+        }
+
+        @keyframes teamGlow {
+            0%, 100% { box-shadow: 0 0 15px white; }
+            50% { box-shadow: 0 0 25px white; }
+        }
+
+        .bet-button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, var(--orange), #ff5500);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 20px;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bet-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .bet-button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .bet-button:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(255, 136, 0, 0.4);
+        }
+
+        .bet-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .bets-list-content {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+            padding-right: 5px;
+        }
+
+        .bets-list-content::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .bets-list-content::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+        }
+
+        .bets-list-content::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 10px;
+        }
+
+        .bet-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            border-left: 4px solid;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .bet-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid var(--accent);
+        }
+
+        .bet-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .bet-username {
+            font-size: 13px;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .bet-amount {
+            font-size: 12px;
+            color: var(--gold);
+        }
+
+        .bet-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid white;
+            flex-shrink: 0;
+            animation: spin 3s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .win-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            border-left: 4px solid var(--green);
+            animation: slideIn 0.3s ease;
+        }
+
+        .win-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid var(--green);
+        }
+
+        .win-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .win-username {
+            font-size: 13px;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .win-details {
+            font-size: 11px;
+            color: #aaa;
+        }
+
+        .win-amount {
+            color: var(--green);
+            font-weight: bold;
+            font-size: 14px;
+            margin-left: auto;
+            white-space: nowrap;
+            animation: bounce 1s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #888;
+            padding: 40px 20px;
+            font-size: 14px;
+        }
+
+        .result-popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 80px;
+            font-weight: 900;
+            color: var(--gold);
+            text-shadow: 0 0 30px var(--gold);
+            z-index: 200;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s;
+            text-align: center;
+        }
+
+        .balance-display {
+            color: var(--gold);
+            font-size: 24px;
+            font-weight: bold;
+            font-family: monospace;
+        }
+
+        .game-status {
+            text-align: center;
+            margin: 10px 0;
+            font-size: 14px;
+            color: var(--accent);
+            height: 20px;
+        }
+
+        .total-bets {
+            text-align: center;
+            color: var(--accent);
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        #bet-status-popup { 
+            position: fixed; 
+            top: 20%; 
+            left: 50%; 
+            transform: translate(-50%, -50%) scale(0); 
+            z-index: 1000; 
+            font-family: 'Orbitron', monospace; 
+            font-size: 40px; 
+            pointer-events: none; 
+            opacity: 0; 
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
+
+        #bet-status-popup.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .sync-indicator {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            padding: 8px 15px;
+            background: rgba(0, 242, 255, 0.2);
+            border: 1px solid var(--accent);
+            border-radius: 10px;
+            font-size: 12px;
+            color: var(--accent);
+            z-index: 100;
+            display: none;
+        }
+
+        .sync-indicator.active {
+            display: block;
+            animation: syncPulse 1s infinite;
+        }
+
+        @keyframes syncPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.05); }
+        }
+    </style>
+</head>
+<body>
+    <div id="bet-status-popup"></div>
+
+    <div class="nav">
+        <button onclick="location.href='/hub'" style="background: rgba(255,255,255,0.1); border:1px solid var(--border); color:#ccc; cursor:pointer; padding:8px 20px; border-radius:8px; transition: 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">⬅ {{ t.back_to_hub|upper }}</button>
+
+        <div class="user-info">
+            <img src="/avatar/{{ user }}" class="avatar-arena" alt="Avatar" onerror="this.src='/static/default_avatar.png'">
+            <div class="balance-display">💰 <span id="balanceDisplay">₽0</span></div>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <!-- ЛЕВАЯ ПАНЕЛЬ: СТАВКИ -->
+        <div class="left-panel">
+            <div class="section-title orange">{{ t.place_bet|upper }} ARENA</div>
+            <div class="game-status" id="gameStatus">{{ t.waiting }}...</div>
+
+            <div>{{ t.select_amount|upper }}:</div>
+            <div class="bet-values" id="betValues"></div>
+
+            <div style="margin: 15px 0;">{{ t.select_team|upper }}:</div>
+            <div class="teams-grid" id="teamsGrid">
+                {% for team in config.teams_colors %}
+                <div class="team-btn" 
+                     style="background: {{ team.hex }}; color: {% if team.hex in ['#ffffff', '#00ff88'] %}black{% else %}white{% endif %};" 
+                     data-color="{{ team.hex }}" 
+                     data-name="{{ team.name }}"
+                     onclick="selectTeamColor(this, '{{ team.hex }}', '{{ team.name }}')">
+                    {{ team.name }}
+                </div>
+                {% endfor %}
+            </div>
+
+            <button class="bet-button" id="placeBetBtn" onclick="placeBet()">{{ t.place_bet|upper }} <span id="betAmountDisplay">1</span></button>
+        </div>
+
+        <!-- ЦЕНТР: АРЕНА -->
+        <div class="arena-container">
+            <div class="arena-timer" id="arenaTimer">30</div>
+            <div class="sync-indicator" id="syncIndicator">🔄 Sync</div>
+            <div class="result-popup" id="resultPopup"></div>
+            <div id="arena-canvas"></div>
+        </div>
+
+        <!-- ПРАВАЯ ПАНЕЛЬ: СТАВКИ И ЗАНОСЫ -->
+        <div class="right-panel">
+            <!-- ВЕРХ: СТАВКИ ИГРОКОВ -->
+            <div class="bets-section">
+                <div class="section-title">{{ t.player_bets|upper }}</div>
+                <div class="total-bets" id="totalBets">{{ t.total_bets }}: 0</div>
+                <div class="bets-list-content" id="currentBetsList">
+                    <div class="empty-state">{{ t.no_history }}</div>
+                </div>
+            </div>
+
+            <!-- НИЗ: ЗАНОСЫ -->
+            <div class="wins-section">
+                <div class="section-title green">{{ t.recent_wins|upper }}</div>
+                <div class="bets-list-content" id="bigWinsList">
+                    <div class="empty-state">{{ t.no_history }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let socket;
+        let selectedBetValue = 1;
+        let selectedTeamColor = null;
+        let selectedTeamName = null;
+        let isBetPlaced = false;
+        let arenaState = "WAITING";
+        let currentUser = "{{ user }}";
+        let userHasBet = false;
+        let lastSyncTime = 0;
+
+        // p5.js переменные
+        let balls = [];
+        let flashes = [];
+        let particles = [];
+        let friction = 1;
+        let gameEnded = false;
+        let targetWinner = null;
+        const ARENA_RADIUS = 300;
+        let isMasterClient = false;
+        let lastBallUpdate = 0;
+        let gameStarted = false;
+
+        // Audio Context для улучшенных звуков
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const filter = audioCtx.createBiquadFilter();
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if(type === 'hit') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.1);
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(2000, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.15);
+            }
+            else if(type === 'explode') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.3);
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(1000, audioCtx.currentTime);
+                filter.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+
+        // Функция обновления баланса
+        async function syncGlobalBalance() {
+            try {
+                const res = await fetch('/get_balance');
+                const data = await res.json();
+                if (data.balance_display !== undefined) {
+                    document.getElementById('balanceDisplay').innerText = '₽' + data.balance_display;
+                }
+            } catch (e) { console.error("Balance sync error"); }
+        }
+
+        // Инициализация Socket.IO
+        function initSocket() {
+            socket = io();
+
+            socket.on('connect', () => {
+                console.log('Connected to arena server');
+                socket.emit('arena_join');
+                isMasterClient = true;
+            });
+
+            socket.on('arena_user_data', (data) => {
+                document.getElementById('balanceDisplay').innerText = '₽' + Math.round(data.balance);
+
+                if (data.has_bet && data.bet_data) {
+                    isBetPlaced = true;
+                    userHasBet = true;
+                    selectedTeamColor = data.bet_data.color;
+                    selectedBetValue = data.bet_data.amount;
+
+                    document.getElementById('placeBetBtn').textContent = '{{ t.bet_accepted|upper }}';
+                    document.getElementById('placeBetBtn').disabled = true;
+
+                    document.querySelectorAll('.team-btn').forEach(btn => {
+                        if (btn.dataset.color === selectedTeamColor) {
+                            btn.classList.add('selected');
+                            selectedTeamName = btn.dataset.name;
+                        }
+                    });
+
+                    let displayBet = Math.round(data.bet_data.amount);
+
+                    updateGameStatus(`{{ t.place_bet }}: ₽${displayBet} -> ${selectedTeamName}`);
+                }
+            });
+
+            socket.on('arena_reset', (data) => {
+                console.log('Game reset');
+                isBetPlaced = false;
+                userHasBet = false;
+                arenaState = "WAITING";
+                balls = [];
+                particles = [];
+                flashes = [];
+                friction = 1;
+                gameEnded = false;
+                targetWinner = null;
+                isMasterClient = true;
+                gameStarted = false;
+
+                if (data.initial_balls) {
+                    loadInitialBalls(data.initial_balls);
+                }
+
+                updateGameStatus("{{ t.waiting }}...");
+                document.getElementById('placeBetBtn').disabled = false;
+                document.getElementById('placeBetBtn').textContent = '{{ t.place_bet|upper }}';
+                document.getElementById('arenaTimer').style.display = 'block';
+                updateBetButtonText();
+            });
+
+            socket.on('arena_show_initial_balls', (data) => {
+                if (data.initial_balls) {
+                    loadInitialBalls(data.initial_balls);
+                }
+            });
+
+            socket.on('arena_timer', (data) => {
+                document.getElementById('arenaTimer').textContent = data.time;
+                if (data.time <= 5) {
+                    document.getElementById('arenaTimer').style.color = '#ff0055';
+                } else {
+                    document.getElementById('arenaTimer').style.color = '#00f2ff';
+                }
+
+                if (data.time <= 10) {
+                    updateGameStatus(`{{ t.game_started }} ${data.time} sec...`);
+                } else {
+                    if (!userHasBet) {
+                        updateGameStatus("{{ t.accept_bets }}...");
+                    }
+                }
+            });
+
+            socket.on('arena_start', (data) => {
+                console.log('Game started with winner color:', data.winner_color);
+                arenaState = "RUNNING";
+                targetWinner = data.winner_color;
+                friction = 1;
+                gameEnded = false;
+                gameStarted = true;
+
+                updateGameStatus("{{ t.running }}...");
+                document.getElementById('arenaTimer').style.display = 'none';
+                document.getElementById('placeBetBtn').disabled = true;
+                document.getElementById('placeBetBtn').textContent = '{{ t.bets_closed|upper }}';
+
+                if (isMasterClient && data.initial_balls) {
+                    startGameFromInitialBalls(data.initial_balls, targetWinner);
+                }
+            });
+
+            socket.on('arena_game_sync', (data) => {
+                if (!isMasterClient && data.balls && data.balls.length > 0) {
+                    const indicator = document.getElementById('syncIndicator');
+                    indicator.classList.add('active');
+                    setTimeout(() => indicator.classList.remove('active'), 500);
+
+                    syncBallsFromServer(data.balls);
+                    friction = data.friction;
+                    gameEnded = data.game_ended;
+
+                    lastSyncTime = Date.now();
+                }
+            });
+
+            socket.on('arena_bet_result', (data) => {
+                const popup = document.getElementById('bet-status-popup');
+
+                if (data.status === 'success') {
+                    document.getElementById('balanceDisplay').innerText = '₽' + Math.round(data.balance_display);
+                    isBetPlaced = true;
+                    userHasBet = true;
+                    document.getElementById('placeBetBtn').textContent = '{{ t.bet_accepted|upper }}';
+                    document.getElementById('placeBetBtn').disabled = true;
+                    updateGameStatus(`{{ t.bet_accepted }} -> ${selectedTeamName}`);
+                } else if (data.status === 'error') {
+                    alert('{{ t.error }}: ' + data.message);
+                } else if (data.status === 'win') {
+                    let displayAmount = Math.round(data.amount);
+                    const linesInfo = data.lines_count ? ` (${data.lines_count} {{ t.lines }})` : '';
+                    popup.innerText = `+₽${displayAmount} x${data.multiplier}${linesInfo}`;
+                    popup.style.color = 'var(--green)';
+                    popup.classList.add('show');
+                    setTimeout(() => {
+                        popup.classList.remove('show');
+                    }, 4000);
+
+                    document.getElementById('balanceDisplay').innerText = '₽' + Math.round(data.balance);
+                    userHasBet = false;
+                } else if (data.status === 'loss') {
+                    let displayAmount = Math.round(data.amount);
+                    popup.innerText = `-₽${displayAmount}`;
+                    popup.style.color = 'var(--red)';
+                    popup.classList.add('show');
+                    setTimeout(() => {
+                        popup.classList.remove('show');
+                    }, 3000);
+                    userHasBet = false;
+                }
+            });
+
+            socket.on('arena_bets_update', (data) => {
+                updateBetsList(data.bets);
+                document.getElementById('totalBets').textContent = `{{ t.total_bets }}: ${data.total_bets}`;
+            });
+
+            socket.on('arena_big_wins', (data) => {
+                updateBigWinsList(data);
+            });
+
+            socket.on('arena_result', (data) => {
+                updateBigWinsList(data.big_wins);
+                arenaState = "FINISHED";
+
+                console.log(`[RESULT] {{ t.win }}: ${data.winner}, {{ t.multiplier }}: ${data.multiplier}x, {{ t.lines }}: ${data.lines_count}`);
+
+                socket.emit('refresh_data', {username: currentUser});
+            });
+
+            socket.on('arena_error', (data) => {
+                alert('{{ t.error }}: ' + data.message);
+            });
+
+            socket.on('disconnect', () => {
+                console.log('Disconnected from server');
+            });
+
+            socket.on('reconnect', () => {
+                console.log('Reconnecting...');
+                socket.emit('arena_join');
+            });
+        }
+
+        function loadInitialBalls(initialBalls) {
+            balls = initialBalls.map(b => new Ball(
+                b.color, 
+                null, 
+                createVector(b.pos.x, b.pos.y),
+                createVector(0, 0),
+                b.lines.map(l => createVector(l.x, l.y))
+            ));
+            console.log(`[INITIAL] Loaded ${balls.length} balls`);
+        }
+
+        function startGameFromInitialBalls(initialBalls, winner) {
+            balls = initialBalls.map(b => {
+                const angle = random(0, 360);
+                const speed = random(3, 5);
+                const vel = createVector(
+                    cos(angle) * speed,
+                    sin(angle) * speed
+                );
+
+                return new Ball(
+                    b.color,
+                    winner,
+                    createVector(b.pos.x, b.pos.y),
+                    vel,
+                    b.lines.map(l => createVector(l.x, l.y))
+                );
+            });
+            console.log(`[START] Game started with ${balls.length} balls`);
+        }
+
+        function syncBallsFromServer(serverBalls) {
+            if (serverBalls.length !== balls.length) {
+                balls = serverBalls.map(b => {
+                    const ball = new Ball(b.color, targetWinner);
+                    ball.pos.x = b.pos.x;
+                    ball.pos.y = b.pos.y;
+                    ball.vel.x = b.vel.x;
+                    ball.vel.y = b.vel.y;
+                    ball.lines = b.lines.map(l => createVector(l.x, l.y));
+                    ball.dead = b.dead;
+                    ball.hasHitWall = b.hasHitWall;
+                    return ball;
+                });
+            } else {
+                for (let i = 0; i < balls.length; i++) {
+                    if (serverBalls[i]) {
+                        balls[i].pos.x = serverBalls[i].pos.x;
+                        balls[i].pos.y = serverBalls[i].pos.y;
+                        balls[i].vel.x = serverBalls[i].vel.x;
+                        balls[i].vel.y = serverBalls[i].vel.y;
+                        balls[i].lines = serverBalls[i].lines.map(l => createVector(l.x, l.y));
+                        balls[i].dead = serverBalls[i].dead;
+                        balls[i].hasHitWall = serverBalls[i].hasHitWall;
+                    }
+                }
+            }
+        }
+
+        function updateGameStatus(message) {
+            document.getElementById('gameStatus').textContent = message;
+        }
+
+        function updateBetButtonText() {
+            let displayValue = selectedBetValue;
+            if (selectedBetValue === "1/4") {
+                displayValue = "1/4";
+            } else if (selectedBetValue === "1/2") {
+                displayValue = "1/2";
+            } else if (selectedBetValue === "ALL") {
+                displayValue = "ALL";
+            }
+            document.getElementById('placeBetBtn').innerHTML = `{{ t.place_bet|upper }} <span id="betAmountDisplay">${displayValue}</span>`;
+        }
+
+        function selectBetValue(element) {
+            if (isBetPlaced || arenaState !== "WAITING") return;
+
+            document.querySelectorAll('.bet-chip').forEach(chip => {
+                chip.classList.remove('active');
+            });
+            element.classList.add('active');
+            selectedBetValue = element.dataset.value;
+            updateBetButtonText();
+        }
+
+        function selectTeamColor(element, color, name) {
+            if (isBetPlaced || arenaState !== "WAITING") return;
+
+            document.querySelectorAll('.team-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            selectedTeamColor = color;
+            selectedTeamName = name;
+        }
+
+        function placeBet() {
+            if (arenaState !== "WAITING") {
+                alert('{{ t.bets_closed }}!');
+                return;
+            }
+
+            if (!selectedTeamColor) {
+                alert('{{ t.select_team }}!');
+                return;
+            }
+
+            if (!selectedBetValue) {
+                alert('{{ t.select_amount }}!');
+                return;
+            }
+
+            socket.emit('arena_place_bet', {
+                amount: selectedBetValue,
+                color: selectedTeamColor
+            });
+        }
+
+        function updateBetsList(bets) {
+            const betsList = document.getElementById('currentBetsList');
+            if (!bets || bets.length === 0) {
+                betsList.innerHTML = '<div class="empty-state">{{ t.no_history }}</div>';
+                return;
+            }
+
+            betsList.innerHTML = bets.map(bet => {
+                let displayAmount = Math.round(bet.amount);
+
+                return `
+                <div class="bet-item" style="border-left-color: ${bet.color}">
+                    <img src="/avatar/${bet.username}" class="bet-avatar" onerror="this.src='/static/default_avatar.png'">
+                    <div class="bet-info">
+                        <div class="bet-username">${bet.username}</div>
+                        <div class="bet-amount">₽${displayAmount}</div>
+                    </div>
+                    <div class="bet-color" style="background: ${bet.color};"></div>
+                </div>
+            `}).join('');
+        }
+
+        function updateBigWinsList(wins) {
+            const winsList = document.getElementById('bigWinsList');
+            if (!wins || wins.length === 0) {
+                winsList.innerHTML = '<div class="empty-state">{{ t.no_history }}</div>';
+                return;
+            }
+
+            winsList.innerHTML = wins.map(win => {
+                const time = new Date(win.timestamp * 1000);
+                const timeStr = `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
+
+                let displayWin = Math.round(win.win_usd);
+
+                return `
+                <div class="win-item">
+                    <img src="/avatar/${win.user}" class="win-avatar" onerror="this.src='/static/default_avatar.png'">
+                    <div class="win-info">
+                        <div class="win-username">${win.user}</div>
+                        <div class="win-details">ARENA - ${timeStr}</div>
+                    </div>
+                    <div class="win-amount">+₽${displayWin}</div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // p5.js setup и draw
+        function setup() {
+            const container = document.querySelector('.arena-container');
+            const canvas = createCanvas(container.clientWidth, container.clientHeight);
+            canvas.parent('arena-canvas');
+            angleMode(DEGREES);
+        }
+
+        function draw() {
+            clear();
+            translate(width / 2, height / 2);
+
+            noFill();
+            stroke(188, 19, 254, 30);
+            strokeWeight(6);
+            ellipse(0, 0, ARENA_RADIUS * 2 + 10);
+
+            stroke(188, 19, 254, 100);
+            strokeWeight(3);
+            ellipse(0, 0, ARENA_RADIUS * 2);
+
+            stroke(255, 15);
+            strokeWeight(1);
+            ellipse(0, 0, ARENA_RADIUS * 2 - 2);
+
+            if (gameStarted && isMasterClient) {
+                let alive = balls.filter(b => !b.dead);
+
+                let colors = new Set();
+                alive.forEach(b => {
+                    if (!b.dead) {
+                        colors.add(b.color);
+                    }
+                });
+
+                if (colors.size === 1 && alive.length > 0 && !gameEnded) {
+                    let allHaveLines = alive.every(b => b.lines.length > 0);
+
+                    if (allHaveLines) {
+                        friction *= 0.985;
+                        if (friction < 0.05) {
+                            gameEnded = true;
+
+                            let totalLines = 0;
+                            alive.forEach(b => {
+                                totalLines += b.lines.length;
+                            });
+
+                            console.log(`[GAME OVER] {{ t.win }}: ${Array.from(colors)[0]}, Balls: ${alive.length}, {{ t.lines }}: ${totalLines}`);
+
+                            socket.emit('client_game_over', {
+                                winner: Array.from(colors)[0],
+                                lines_count: totalLines
+                            });
+                        }
+                    }
+                }
+
+                balls.forEach(b => {
+                    b.update();
+                    b.checkLines(balls);
+                    b.display();
+                });
+
+                for(let i = balls.length - 1; i >= 0; i--) {
+                    if(balls[i].dead) {
+                        playSound('explode');
+                        for(let j = 0; j < 15; j++) {
+                            particles.push(new Particle(balls[i].pos, balls[i].color));
+                        }
+                        balls.splice(i, 1);
+                    }
+                }
+
+                const now = Date.now();
+                if (now - lastBallUpdate > 50 && arenaState === "RUNNING") {
+                    lastBallUpdate = now;
+                    socket.emit('client_ball_update', {
+                        balls: balls.map(b => ({
+                            color: b.color,
+                            pos: {x: b.pos.x, y: b.pos.y},
+                            vel: {x: b.vel.x, y: b.vel.y},
+                            lines: b.lines.map(l => ({x: l.x, y: l.y})),
+                            dead: b.dead,
+                            hasHitWall: b.hasHitWall
+                        })),
+                        friction: friction,
+                        game_ended: gameEnded
+                    });
+                }
+            } else if (!gameStarted) {
+                balls.forEach(b => {
+                    b.display();
+                });
+            } else {
+                balls.forEach(b => {
+                    b.display();
+                });
+            }
+
+            particles.forEach((p, i) => {
+                p.update();
+                p.display();
+                if(p.alpha <= 0) particles.splice(i, 1);
+            });
+
+            flashes.forEach((f, i) => {
+                f.display();
+                if(f.life <= 0) flashes.splice(i, 1);
+            });
+        }
+
+        function windowResized() {
+            const container = document.querySelector('.arena-container');
+            resizeCanvas(container.clientWidth, container.clientHeight);
+        }
+
+        // Классы для игры
+        class Ball {
+            constructor(c, target, pos = null, vel = null, lines = null) {
+                this.color = c;
+                this.target = target;
+
+                if (pos) {
+                    this.pos = pos.copy();
+                } else {
+                    this.pos = p5.Vector.random2D().mult(random(ARENA_RADIUS - 60));
+                }
+
+                if (vel) {
+                    this.vel = vel.copy();
+                } else {
+                    this.vel = p5.Vector.random2D().mult(4 / 1.5);
+                }
+
+                this.r = 11;
+
+                if (lines) {
+                    this.lines = lines.map(l => l.copy());
+                } else {
+                    this.lines = [];
+                }
+
+                this.dead = false;
+                this.hasHitWall = lines && lines.length > 0;
+            }
+
+            update() {
+                if (!gameStarted) return;
+
+                this.pos.add(p5.Vector.mult(this.vel, friction));
+
+                balls.forEach(other => {
+                    if (other === this || other.dead || this.dead) return;
+
+                    const dist = this.pos.dist(other.pos);
+                    if (dist < (this.r + other.r) && dist > 0) {
+                        const angle = atan2(other.pos.y - this.pos.y, other.pos.x - this.pos.x);
+                        const targetX = this.pos.x + cos(angle) * (this.r + other.r);
+                        const targetY = this.pos.y + sin(angle) * (this.r + other.r);
+
+                        const ax = (targetX - other.pos.x) * 0.05;
+                        const ay = (targetY - other.pos.y) * 0.05;
+
+                        this.vel.x -= ax;
+                        this.vel.y -= ay;
+                        other.vel.x += ax;
+                        other.vel.y += ay;
+                    }
+                });
+
+                if (this.pos.dist(createVector(0, 0)) > ARENA_RADIUS - this.r) {
+                    let n = this.pos.copy().normalize();
+                    this.vel.sub(p5.Vector.mult(n, 2 * this.vel.dot(n)));
+                    this.pos = n.copy().mult(ARENA_RADIUS - this.r);
+                    this.hasHitWall = true;
+
+                    if(!gameEnded) {
+                        this.lines.push(n.copy().mult(ARENA_RADIUS));
+                        flashes.push(new Flash(n.heading(), this.color));
+                        playSound('hit');
+                    }
+                }
+
+                if(this.hasHitWall && this.lines.length === 0 && this.target && this.color !== this.target) {
+                    this.dead = true;
+                }
+            }
+
+            checkLines(others) {
+                if (!gameStarted) return;
+
+                others.forEach(o => {
+                    if(o.color === this.color) return;
+                    for(let i = o.lines.length - 1; i >= 0; i--) {
+                        if(distToSegment(this.pos, o.pos, o.lines[i]) < this.r + 3) {
+                            o.lines.splice(i, 1);
+                        }
+                    }
+                });
+            }
+
+            display() {
+                push();
+
+                stroke(this.color);
+                strokeWeight(2.5);
+                this.lines.forEach((l, index) => {
+                    strokeWeight(3);
+                    stroke(this.color + '44');
+                    line(this.pos.x, this.pos.y, l.x, l.y);
+
+                    strokeWeight(1.5);
+                    stroke(this.color);
+                    line(this.pos.x, this.pos.y, l.x, l.y);
+                });
+
+                noStroke();
+                fill(0, 0, 0, 50);
+                ellipse(this.pos.x + 3, this.pos.y + 3, this.r * 2);
+
+                for(let i = 3; i > 0; i--) {
+                    fill(this.color + (20 * i).toString(16));
+                    ellipse(this.pos.x, this.pos.y, this.r * 2 + i * 4);
+                }
+
+                fill(this.color);
+                noStroke();
+                ellipse(this.pos.x, this.pos.y, this.r * 2);
+
+                fill(255, 255, 255, 150);
+                ellipse(this.pos.x - this.r/3, this.pos.y - this.r/3, this.r/2);
+
+                pop();
+            }
+        }
+
+        class Particle {
+            constructor(pos, color) {
+                this.pos = pos.copy();
+                this.vel = p5.Vector.random2D().mult(random(2, 6));
+                this.acc = createVector(0, 0.2);
+                this.color = color;
+                this.alpha = 255;
+                this.size = random(3, 7);
+            }
+
+            update() {
+                this.vel.add(this.acc);
+                this.pos.add(this.vel);
+                if (this.pos.dist(createVector(0, 0)) > ARENA_RADIUS) {
+                    this.vel.mult(0);
+                    this.alpha -= 8;
+                } else {
+                    this.alpha -= 3;
+                }
+            }
+
+            display() {
+                push();
+                noStroke();
+
+                let alphaHex = Math.floor(this.alpha * 0.3).toString(16).padStart(2, '0');
+                fill(this.color + alphaHex);
+                ellipse(this.pos.x, this.pos.y, this.size * 2);
+
+                alphaHex = Math.floor(this.alpha).toString(16).padStart(2, '0');
+                fill(this.color + alphaHex);
+                ellipse(this.pos.x, this.pos.y, this.size);
+                pop();
+            }
+        }
+
+        function distToSegment(p, v, w) {
+            let l2 = p5.Vector.dist(v, w) ** 2;
+            if (l2 == 0) return p5.Vector.dist(p, v);
+            let t = Math.max(0, Math.min(1, p5.Vector.dot(p5.Vector.sub(p, v), p5.Vector.sub(w, v)) / l2));
+            return p5.Vector.dist(p, p5.Vector.add(v, p5.Vector.mult(p5.Vector.sub(w, v), t)));
+        }
+
+        class Flash {
+            constructor(a, c) {
+                this.a = a;
+                this.c = c;
+                this.life = 1.0;
+            }
+
+            display() {
+                this.life -= 0.05;
+                push();
+                noFill();
+
+                stroke(this.c + Math.floor(this.life * 30).toString(16).padStart(2, '0'));
+                strokeWeight(12);
+                arc(0, 0, ARENA_RADIUS * 2, ARENA_RADIUS * 2, this.a - 0.3, this.a + 0.3);
+
+                stroke(this.c + Math.floor(this.life * 100).toString(16).padStart(2, '0'));
+                strokeWeight(6);
+                arc(0, 0, ARENA_RADIUS * 2, ARENA_RADIUS * 2, this.a - 0.2, this.a + 0.2);
+
+                pop();
+            }
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            initSocket();
+            setInterval(syncGlobalBalance, 2000);
+
+            const betValuesContainer = document.getElementById('betValues');
+
+            if (betValuesContainer.children.length === 0) {
+                const betValuesArray = {{ bet_values|tojson }};
+
+                betValuesArray.forEach((val, index) => {
+                    const chip = document.createElement('div');
+                    chip.className = 'bet-chip' + (index === 0 ? ' active' : '');
+                    chip.dataset.value = val;
+
+                    if (val === '1/4') {
+                        chip.textContent = '1/4';
+                    } else if (val === '1/2') {
+                        chip.textContent = '1/2';
+                    } else if (val === 'ALL') {
+                        chip.textContent = 'ALL';
+                    } else {
+                        chip.textContent = '₽' + val;
+                    }
+
+                    chip.onclick = function() { selectBetValue(this); };
+                    betValuesContainer.appendChild(chip);
+                });
+            }
+
+            setTimeout(() => {
+                const firstTeam = document.querySelector('.team-btn');
+                if (firstTeam && !userHasBet) {
+                    selectTeamColor(firstTeam, firstTeam.dataset.color, firstTeam.dataset.name);
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NEO-CRASH</title>
+    <style>
+        :root { --neon: #bc13fe; --accent: #00f2ff; --red: #ff0055; --gold: #ffd700; --win: #22ff00; --glass: rgba(255, 255, 255, 0.05); --border: rgba(255, 255, 255, 0.1); }
+        body { 
+            background: radial-gradient(circle at 50% 50%, #1a0b2e 0%, #05010a 100%);
+            color: #fff; font-family: 'Inter', sans-serif; margin: 0;
+            display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden;
+            transition: background 0.3s;
+        }
+        body.win-flash { background: radial-gradient(circle at 50% 50%, #1a4b2e 0%, #05010a 100%); }
+
+        .nav { width: 100%; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); z-index: 100; }
+        .game-container { display: flex; gap: 20px; width: 95vw; height: 80vh; margin-top: 20px; }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .avatar-rocket {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: 2px solid var(--accent);
+            object-fit: cover;
+        }
+
+        .chart-area {
+            flex-grow: 1; background: var(--glass); backdrop-filter: blur(25px); border: 2px solid var(--neon);
+            border-radius: 24px; position: relative; overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+        #multiplier {
+            position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 100px; font-weight: 900; z-index: 10;
+            text-shadow: 0 0 30px var(--neon); pointer-events: none; opacity: 0.8;
+            transition: transform 0.3s, color 0.3s;
+        }
+        #rocket {
+            position: absolute; width: 60px; height: 60px;
+            font-size: 40px; display: flex; align-items: center; justify-content: center;
+            z-index: 20; pointer-events: none;
+            filter: drop-shadow(0 0 15px var(--accent));
+            will-change: transform, left, top;
+            transition: transform 0.1s linear;
+        }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+        .win-popup {
+            position: absolute; color: var(--win); font-weight: 900; font-size: 32px;
+            pointer-events: none; z-index: 30; animation: winFloat 1.5s ease-out forwards;
+            text-shadow: 0 0 15px rgba(34, 255, 0, 0.6);
+        }
+        @keyframes winFloat {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-100px); opacity: 0; }
+        }
+
+        .controls {
+            width: 320px; background: var(--glass); backdrop-filter: blur(25px);
+            border-radius: 24px; padding: 25px; border: 1px solid var(--border);
+            display: flex; flex-direction: column; gap: 15px;
+        }
+
+        .bet-chip { padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #ccc; cursor: pointer; text-align: center; transition: all 0.3s; font-size: 13px; margin: 3px; }
+        .bet-chip:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
+        .bet-chip.active { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px var(--accent); background: rgba(0, 242, 255, 0.1); }
+
+        .bet-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .btn-main { height: 70px; border: none; border-radius: 16px; font-weight: bold; font-size: 22px; cursor: pointer; transition: 0.3s; color: white; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-bet { background: linear-gradient(135deg, #00f2ff, #0072ff); box-shadow: 0 0 20px rgba(0,242,255,0.4); }
+        .btn-cashout { background: linear-gradient(135deg, #bc13fe, #7000ff); display: none; box-shadow: 0 0 20px rgba(188,19,254,0.4); }
+        .btn-main:disabled { filter: grayscale(1); opacity: 0.5; cursor: not-allowed; }
+        .btn-main:hover:not(:disabled) { transform: translateY(-3px); }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <button onclick="location.href='/hub'" style="background: rgba(255,255,255,0.1); border: 1px solid var(--border); color:#ccc; cursor:pointer; padding:8px 20px; border-radius:8px;">⬅ {{ t.back_to_hub|upper }}</button>
+
+        <div class="user-info">
+            <img src="/avatar/{{ user }}" class="avatar-rocket" alt="Avatar" onerror="this.src='/static/default_avatar.png'">
+            <div style="color: var(--gold); font-size: 20px; font-weight: bold; font-family: monospace;">
+                💰 <span id="balanceDisplay">₽{{ balance_display }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <div class="chart-area" id="stage">
+            <canvas id="trailCanvas"></canvas>
+            <div id="multiplier">0.00x</div>
+            <div id="rocket">🚀</div>
+        </div>
+
+        <div class="controls">
+            <div style="font-size:12px; color:#888; text-align:center;">{{ t.select_amount|upper }}</div>
+            <div class="bet-grid" id="betGrid"></div>
+
+            <button id="betBtn" class="btn-main btn-bet" onclick="placeBet()">{{ t.place_bet|upper }}</button>
+            <button id="cashoutBtn" class="btn-main btn-cashout" onclick="cashOut()">{{ t.cash_out|upper }}</button>
+            <div id="statusLabel" style="text-align:center; color:#888; font-size:14px; margin-top:10px;">{{ t.waiting }}...</div>
+        </div>
+    </div>
+
+    <script>
+        let currentMultiplier = 0.0;
+        let gameActive = false; 
+        let isCrashed = false;
+        let selectedBet = {{ bet_values[0] }};
+        let startTime = 0;
+        let points = [];
+        let animationId = null;
+        let initialRocketX = 60;
+        let initialRocketY = 0;
+
+        const canvas = document.getElementById('trailCanvas');
+        const ctx = canvas.getContext('2d');
+        const rocket = document.getElementById('rocket');
+        const multText = document.getElementById('multiplier');
+        const betBtn = document.getElementById('betBtn');
+        const cashoutBtn = document.getElementById('cashoutBtn');
+        const statusLabel = document.getElementById('statusLabel');
+        const stage = document.getElementById('stage');
+
+        function resizeCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            initialRocketY = canvas.height - 80;
+
+            // Устанавливаем начальную позицию ракеты
+            if (!gameActive) {
+                rocket.style.left = initialRocketX + 'px';
+                rocket.style.top = initialRocketY + 'px';
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        async function syncGlobalBalance() {
+            try {
+                const res = await fetch('/get_balance');
+                const data = await res.json();
+                if (data.balance_display !== undefined) {
+                    document.getElementById('balanceDisplay').innerText = '₽' + data.balance_display;
+                }
+            } catch (e) { console.error("Balance sync error"); }
+        }
+        setInterval(syncGlobalBalance, 2000);
+        syncGlobalBalance();
+
+        const betGrid = document.getElementById('betGrid');
+        const betValues = {{ bet_values|tojson }};
+        betValues.forEach((val, index) => {
+            const chip = document.createElement('div');
+            chip.className = 'bet-chip' + (index === 0 ? ' active' : '');
+
+            if (val === "1/4") {
+                chip.textContent = '1/4';
+            } else if (val === "1/2") {
+                chip.textContent = '1/2';
+            } else if (val === "ALL") {
+                chip.textContent = 'ALL';
+            } else {
+                chip.textContent = '₽' + val;
+            }
+
+            chip.onclick = () => {
+                document.querySelectorAll('.bet-chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                selectedBet = val;
+            };
+            betGrid.appendChild(chip);
+        });
+
+        async function syncState() {
+            try {
+                const res = await fetch('/rocket/status?t=' + Date.now());
+                const server = await res.json();
+
+                if (server.is_flying) {
+                    currentMultiplier = server.multiplier;
+                    multText.innerText = currentMultiplier.toFixed(2) + "x";
+
+                    betBtn.disabled = true;
+                    betBtn.style.display = 'none';
+                    cashoutBtn.style.display = 'block';
+                    cashoutBtn.disabled = false;
+
+                    cashoutBtn.innerText = `{{ t.cash_out|upper }}`;
+                    statusLabel.innerText = "{{ t.flying|upper }}...";
+                    statusLabel.style.color = 'var(--accent)';
+
+                    if (!gameActive && !isCrashed) {
+                        startVisualFlight();
+                    }
+                } else if (server.crashed) {
+                    triggerCrash(server.multiplier);
+                } else {
+                    if (gameActive) {
+                        resetState();
+                    }
+                }
+            } catch (e) { console.error("Server error"); }
+        }
+
+        setInterval(syncState, 100);
+
+        function startVisualFlight() {
+            gameActive = true;
+            isCrashed = false;
+            multText.style.color = 'white';
+            startTime = Date.now();
+            points = [];
+
+            // Начинаем с начальной позиции
+            rocket.style.left = initialRocketX + 'px';
+            rocket.style.top = initialRocketY + 'px';
+
+            animateFrame();
+        }
+
+        function animateFrame() {
+            if (!gameActive || isCrashed) return;
+            const elapsed = (Date.now() - startTime) / 1000;
+
+            let x = initialRocketX + (Math.pow(elapsed, 1.3) * 80);
+            let y = initialRocketY - (Math.pow(elapsed, 1.5) * 25);
+
+            const finalX = Math.min(x, canvas.width - 100);
+            const finalY = Math.max(y, 80);
+
+            if (points.length > 0) {
+                const prev = points[points.length - 1];
+                const dx = finalX - prev.x;
+                const dy = finalY - prev.y;
+                const angle = Math.atan2(dy, dx) * (180 / Math.PI) + 45;
+                rocket.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+            }
+
+            points.push({x: finalX, y: finalY});
+            if (points.length > 300) points.shift();
+            drawTrail();
+            rocket.style.left = finalX + 'px';
+            rocket.style.top = finalY + 'px';
+
+            animationId = requestAnimationFrame(animateFrame);
+        }
+
+        function drawTrail() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (points.length < 2) return;
+            ctx.beginPath();
+            ctx.lineWidth = 5;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            const gradient = ctx.createLinearGradient(points[0].x, points[0].y, points[points.length-1].x, points[points.length-1].y);
+            gradient.addColorStop(0, '#00f2ff');
+            gradient.addColorStop(1, '#bc13fe');
+            ctx.strokeStyle = gradient;
+
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = 'rgba(0, 242, 255, 0.5)';
+            ctx.moveTo(points[0].x, points[0].y);
+            for (let i = 1; i < points.length; i++) {
+                ctx.lineTo(points[i].x, points[i].y);
+            }
+            ctx.stroke();
+        }
+
+        async function placeBet() {
+            const res = await fetch('/rocket/bet', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ amount: selectedBet })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                syncGlobalBalance();
+
+                let displayBet = selectedBet;
+                if (selectedBet === "1/4") displayBet = "1/4";
+                else if (selectedBet === "1/2") displayBet = "1/2";
+                else if (selectedBet === "ALL") displayBet = "ALL";
+                else displayBet = '₽' + selectedBet;
+
+                statusLabel.innerText = `{{ t.place_bet }}: ${displayBet}`;
+                statusLabel.style.color = 'var(--win)';
+            } else {
+                alert(data.message);
+            }
+        }
+
+        async function cashOut() {
+            if (!gameActive || isCrashed || currentMultiplier < 0.01) return;
+
+            const res = await fetch('/rocket/cashout', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            });
+            const data = await res.json();
+
+            if (data.status === 'success') {
+                syncGlobalBalance();
+                showWinAnimation(data.win_amount);
+                resetState();
+            } else if (data.status === 'error') {
+                alert(data.message);
+                resetState();
+            }
+        }
+
+        function showWinAnimation(amount) {
+            document.body.classList.add('win-flash');
+            setTimeout(() => document.body.classList.remove('win-flash'), 500);
+            multText.style.color = 'var(--gold)';
+
+            const popup = document.createElement('div');
+            popup.className = 'win-popup';
+            popup.innerText = `+₽${amount}`;
+            popup.style.left = rocket.style.left;
+            popup.style.top = rocket.style.top;
+            stage.appendChild(popup);
+            setTimeout(() => popup.remove(), 1500);
+
+            statusLabel.innerText = `{{ t.win|upper }}: ₽${amount}`;
+            statusLabel.style.color = 'var(--win)';
+        }
+
+        function triggerCrash(crashValue) {
+            isCrashed = true;
+            gameActive = false;
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            multText.innerText = "💥 {{ t.crash|upper }} " + crashValue.toFixed(2) + "x";
+            multText.style.color = 'var(--red)';
+            rocket.innerText = "💥";
+            statusLabel.innerText = "{{ t.loss|upper }}";
+            statusLabel.style.color = 'var(--red)';
+
+            setTimeout(() => {
+                resetState();
+            }, 3000);
+        }
+
+        function resetState() {
+            gameActive = false;
+            isCrashed = false;
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            rocket.innerText = "🚀";
+            rocket.style.left = initialRocketX + 'px';
+            rocket.style.top = initialRocketY + 'px';
+            rocket.style.transform = `translate(-50%, -50%) rotate(0deg)`;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            multText.style.color = 'white';
+            multText.innerText = "0.00x";
+            points = [];
+
+            betBtn.disabled = false;
+            betBtn.style.display = 'block';
+            cashoutBtn.style.display = 'none';
+            statusLabel.innerText = "{{ t.waiting }}...";
+            statusLabel.style.color = '#888';
+        }
+    </script>
+</body>
+</html>

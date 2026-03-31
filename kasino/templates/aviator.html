@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NEO-AVIATOR</title>
+    <style>
+        :root { --neon: #bc13fe; --accent: #00f2ff; --red: #ff0055; --gold: #ffd700; --win: #22ff00; --glass: rgba(255, 255, 255, 0.05); --border: rgba(255, 255, 255, 0.1); }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px var(--accent); }
+            50% { box-shadow: 0 0 40px var(--accent); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        body { 
+            background: radial-gradient(circle at 50% 50%, #1a0b2e 0%, #05010a 100%);
+            color: #fff; 
+            font-family: 'Inter', sans-serif; 
+            margin: 0;
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            height: 100vh; 
+            overflow: hidden;
+        }
+
+        .nav { 
+            width: 100%; 
+            padding: 20px 40px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-sizing: border-box; 
+            background: rgba(0,0,0,0.3); 
+            backdrop-filter: blur(10px); 
+            z-index: 100; 
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .avatar-aviator {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: 2px solid var(--accent);
+            object-fit: cover;
+        }
+
+        .game-container { 
+            display: flex; 
+            gap: 20px; 
+            width: 95vw; 
+            height: 80vh; 
+            margin-top: 20px; 
+        }
+
+        .flight-area {
+            flex-grow: 1; 
+            background: linear-gradient(180deg, #5ca9db 0%, #2b6b9e 50%, #1a5280 100%);
+            border: 3px solid #000;
+            border-radius: 24px; 
+            position: relative; 
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+
+        canvas { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+        }
+
+        #stats {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 40px;
+            z-index: 10;
+            background: rgba(0,0,0,0.9);
+            padding: 15px 40px;
+            border-radius: 16px;
+            border: 2px solid var(--accent);
+            animation: glow 2s infinite;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 900;
+            color: var(--gold);
+            font-family: 'Orbitron', monospace;
+            text-shadow: 0 0 20px var(--gold);
+            animation: pulse 2s infinite;
+        }
+
+        .controls {
+            width: 320px; 
+            background: var(--glass); 
+            backdrop-filter: blur(25px);
+            border-radius: 24px; 
+            padding: 25px; 
+            border: 1px solid var(--border);
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px;
+        }
+
+        .bet-chip { 
+            padding: 10px; 
+            background: rgba(255,255,255,0.05); 
+            border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 8px; 
+            color: #ccc; 
+            cursor: pointer; 
+            text-align: center; 
+            transition: all 0.3s; 
+            font-size: 13px; 
+            margin: 3px; 
+        }
+
+        .bet-chip:hover { 
+            background: rgba(255,255,255,0.1); 
+            transform: translateY(-2px); 
+        }
+
+        .bet-chip.active { 
+            border-color: var(--accent); 
+            color: var(--accent); 
+            box-shadow: 0 0 10px var(--accent); 
+            background: rgba(0, 242, 255, 0.1); 
+            animation: glow 1.5s infinite;
+        }
+
+        .bet-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .btn-main { 
+            height: 70px; 
+            border: none; 
+            border-radius: 16px; 
+            font-weight: bold; 
+            font-size: 22px; 
+            cursor: pointer; 
+            transition: 0.3s; 
+            color: white; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+        }
+
+        .btn-bet { 
+            background: linear-gradient(135deg, #00f2ff, #0072ff); 
+            box-shadow: 0 0 20px rgba(0,242,255,0.4); 
+        }
+
+        .btn-main:disabled { 
+            filter: grayscale(1); 
+            opacity: 0.5; 
+            cursor: not-allowed; 
+        }
+
+        .btn-main:hover:not(:disabled) { 
+            transform: translateY(-3px); 
+            box-shadow: 0 10px 30px rgba(0,242,255,0.6);
+        }
+
+        .result-popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(0, 0, 0, 0.95);
+            border: 3px solid var(--gold);
+            border-radius: 24px;
+            padding: 40px 60px;
+            z-index: 101;
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .result-popup.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .result-popup.win {
+            border-color: var(--win);
+            animation: glow 1s infinite;
+        }
+
+        .result-popup.lose {
+            border-color: var(--red);
+        }
+
+        .result-popup .title {
+            font-size: 48px;
+            font-weight: 900;
+            margin-bottom: 20px;
+        }
+
+        .result-popup.win .title {
+            color: var(--win);
+            text-shadow: 0 0 30px var(--win);
+        }
+
+        .result-popup.lose .title {
+            color: var(--red);
+            text-shadow: 0 0 30px var(--red);
+        }
+
+        .result-popup .amount {
+            font-size: 36px;
+            color: var(--gold);
+            font-weight: 900;
+            margin: 10px 0;
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <button onclick="location.href='/hub'" style="background: rgba(255,255,255,0.1); border: 1px solid var(--border); color:#ccc; cursor:pointer; padding:8px 20px; border-radius:8px;">⬅ {{ t.back_to_hub|upper }}</button>
+
+        <div class="user-info">
+            <img src="/avatar/{{ user }}" class="avatar-aviator" alt="Avatar" onerror="this.src='/static/default_avatar.png'">
+            <div style="color: var(--gold); font-size: 20px; font-weight: bold; font-family: monospace;">
+                💰 <span id="balanceDisplay">₽{{ balance_display }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <div class="flight-area" id="flightArea">
+            <canvas id="skyCanvas"></canvas>
+
+            <div id="stats">
+                <div class="stat">
+                    <div class="stat-label">{{ t.distance|upper }}</div>
+                    <div class="stat-value" id="distanceDisplay">0m</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">{{ t.multiplier|upper }}</div>
+                    <div class="stat-value" id="multiplierDisplay">1.00x</div>
+                </div>
+            </div>
+
+            <div class="result-popup" id="resultPopup">
+                <div class="title" id="resultTitle"></div>
+                <div class="amount" id="resultAmount"></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div style="font-size:12px; color:#888; text-align:center;">{{ t.select_amount|upper }}</div>
+            <div class="bet-grid" id="betGrid"></div>
+
+            <button id="betBtn" class="btn-main btn-bet" onclick="takeOff()">✈️ {{ t.take_off|upper }}</button>
+            <div id="statusLabel" style="text-align:center; color:#888; font-size:14px; margin-top:10px;">{{ t.ready_takeoff }}...</div>
+        </div>
+    </div>
+
+    <script>
+        let selectedBet = {{ bet_values[0] }};
+        let isFlying = false;
+        let flightData = null;
+        let animationId = null;
+        let currentDistance = 0;
+        let planeY = 0;
+        let planeVelocityY = 0;
+        let cameraX = 0;
+        let currentMultiplier = 1.0;
+        let passedEvents = new Set();
+        let cloudOffset = 0;
+        let engineActive = false;
+        let engineTimer = 0;
+        let isClimbing = false;
+        let explosions = [];
+        let glowEffects = [];
+        let smokeParticles = [];
+        let planeAngle = 0;
+        let targetAngle = 0;
+        let cameraFollowStarted = false;
+        let initialViewWidth = 0;
+
+        // Загрузка изображений
+        const planeImg = new Image();
+        planeImg.src = '/static/plane.png';
+        const shipImg = new Image();
+        shipImg.src = '/static/ship.png';
+
+        const canvas = document.getElementById('skyCanvas');
+        const ctx = canvas.getContext('2d');
+        const flightArea = document.getElementById('flightArea');
+        const betBtn = document.getElementById('betBtn');
+        const statusLabel = document.getElementById('statusLabel');
+
+        // Audio Context для звуков
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const filter = audioCtx.createBiquadFilter();
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if(type === 'takeoff') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.5);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+            } else if(type === 'collect') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            } else if(type === 'explosion') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.4);
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(1000, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.4);
+            } else if(type === 'crash') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(500, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 1);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 1);
+            } else if(type === 'win') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(900, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+
+        const SPEED = 2.5;
+        const CLIMB_RATE = -2.2;  // Выше поднимается
+        const GLIDE_GRAVITY = 0.08;
+        const GLIDE_LIFT = 0.95;
+        const ENGINE_BOOST = -2.5;
+        const WATER_LEVEL = 150;
+        const MAX_GLIDE_VELOCITY = 1.5;
+
+        // Хитбоксы под ваши изображения
+        const PLANE_WIDTH = 300;  // Ширина самолета
+        const PLANE_HEIGHT = 120; // Высота самолета
+        const SHIP_WIDTH = 800;   // Ширина корабля
+        const SHIP_HEIGHT = 200;  // Высота корабля
+
+        function resizeCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            initialViewWidth = canvas.width;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Инициализация
+        function drawInitialScene() {
+            if (isFlying) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Небо
+            const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            skyGradient.addColorStop(0, '#5ca9db');
+            skyGradient.addColorStop(0.5, '#2b6b9e');
+            skyGradient.addColorStop(1, '#1a5280');
+            ctx.fillStyle = skyGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Облака
+            cloudOffset += 0.3;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            for (let i = 0; i < 10; i++) {
+                const cloudX = ((i * 300 - cloudOffset) % (canvas.width + 400)) - 200;
+                const cloudY = 80 + (i % 4) * 140;
+                const cloudScale = 0.8 + Math.sin(Date.now() / 2000 + i) * 0.2;
+                drawCloud(cloudX, cloudY, cloudScale);
+            }
+
+            // Вода
+            const waterY = canvas.height - WATER_LEVEL;
+            const gradient = ctx.createLinearGradient(0, waterY, 0, canvas.height);
+            gradient.addColorStop(0, '#0d4a6e');
+            gradient.addColorStop(1, '#083550');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, waterY, canvas.width, WATER_LEVEL);
+
+            // Волны
+            ctx.strokeStyle = 'rgba(10, 53, 80, 0.8)';
+            ctx.lineWidth = 3;
+            for (let i = 0; i < canvas.width / 50; i++) {
+                const waveX = (i * 50 - (cloudOffset * 0.5) % 50);
+                ctx.beginPath();
+                ctx.moveTo(waveX, waterY);
+                ctx.quadraticCurveTo(waveX + 12, waterY + 10, waveX + 25, waterY);
+                ctx.quadraticCurveTo(waveX + 37, waterY - 10, waveX + 50, waterY);
+                ctx.stroke();
+            }
+
+            // Авианосец
+            drawCarrier(200, waterY);
+
+            // Самолет на авианосце
+            drawPlane(200, waterY - 100, 0);
+
+            requestAnimationFrame(drawInitialScene);
+        }
+
+        async function syncGlobalBalance() {
+            try {
+                const res = await fetch('/get_balance');
+                const data = await res.json();
+                if (data.balance_display !== undefined) {
+                    document.getElementById('balanceDisplay').innerText = '₽' + data.balance_display;
+                }
+            } catch (e) { console.error("Balance sync error"); }
+        }
+        setInterval(syncGlobalBalance, 2000);
+        syncGlobalBalance();
+
+        // Генерация чипов ставок
+        const betGrid = document.getElementById('betGrid');
+        const betValues = {{ bet_values|tojson }};
+        betValues.forEach((val, index) => {
+            const chip = document.createElement('div');
+            chip.className = 'bet-chip' + (index === 0 ? ' active' : '');
+
+            if (val === "1/4") {
+                chip.textContent = '1/4';
+            } else if (val === "1/2") {
+                chip.textContent = '1/2';
+            } else if (val === "ALL") {
+                chip.textContent = 'ALL';
+            } else {
+                chip.textContent = '₽' + val;
+            }
+
+            chip.onclick = () => {
+                document.querySelectorAll('.bet-chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                selectedBet = val;
+            };
+            betGrid.appendChild(chip);
+        });
+
+        // Взлет
+        async function takeOff() {
+            const res = await fetch('/aviator/bet', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ amount: selectedBet })
+            });
+            const data = await res.json();
+
+            if (data.status === 'success') {
+                syncGlobalBalance();
+                playSound('takeoff');
+
+                isFlying = true;
+                flightData = data.flight_data;
+                currentDistance = 0;
+                planeY = canvas.height - WATER_LEVEL - 100;
+                planeVelocityY = 0;
+                cameraX = 0;
+                currentMultiplier = 1.0;
+                passedEvents.clear();
+                isClimbing = true;
+                engineActive = true;
+                engineTimer = 0;
+                explosions = [];
+                glowEffects = [];
+                smokeParticles = [];
+                planeAngle = 0;
+                targetAngle = 0;
+                cameraFollowStarted = false;
+
+                betBtn.disabled = true;
+
+                statusLabel.innerText = "{{ t.in_flight }}...";
+                statusLabel.style.color = 'var(--accent)';
+
+                startFlight();
+            } else {
+                alert(data.message);
+            }
+        }
+
+        function startFlight() {
+            drawFlight();
+        }
+
+        function drawFlight() {
+            if (!isFlying) return;
+
+            // Движение вперед
+            currentDistance += SPEED;
+
+            // Позиция самолета на экране
+            let planeScreenX = 200 + currentDistance - cameraX;
+
+            // Камера начинает следовать когда самолет достигает центра
+            if (planeScreenX >= canvas.width / 2 && !cameraFollowStarted) {
+                cameraFollowStarted = true;
+            }
+
+            // Следование камеры
+            if (cameraFollowStarted) {
+                cameraX += SPEED;
+            }
+
+            planeScreenX = 200 + currentDistance - cameraX;
+
+            // Физика высоты
+            if (currentDistance < flightData.glide_start) {
+                // Набор высоты
+                planeVelocityY = CLIMB_RATE;
+                planeY += planeVelocityY;
+                planeY = Math.max(canvas.height * 0.2, planeY);
+                targetAngle = -0.25;
+            } else {
+                isClimbing = false;
+
+                if (engineActive && engineTimer > 0) {
+                    planeVelocityY += ENGINE_BOOST * 0.1;
+                    engineTimer -= 1/60;
+                    if (engineTimer <= 0) {
+                        engineActive = false;
+                    }
+                    targetAngle = -0.15;
+                } else {
+                    planeVelocityY += GLIDE_GRAVITY;
+                    planeVelocityY *= GLIDE_LIFT;
+
+                    if (planeVelocityY > MAX_GLIDE_VELOCITY) {
+                        planeVelocityY = MAX_GLIDE_VELOCITY;
+                    }
+
+                    targetAngle = planeVelocityY * 0.25;
+                }
+
+                planeY += planeVelocityY;
+            }
+
+            // Плавное изменение угла
+            planeAngle += (targetAngle - planeAngle) * 0.15;
+
+            // Очистка
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Небо
+            const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            skyGradient.addColorStop(0, '#5ca9db');
+            skyGradient.addColorStop(0.5, '#2b6b9e');
+            skyGradient.addColorStop(1, '#1a5280');
+            ctx.fillStyle = skyGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Облака
+            cloudOffset += 1.2;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            const numClouds = Math.ceil(canvas.width / 300) + 8;
+            for (let i = 0; i < numClouds; i++) {
+                const cloudX = ((i * 300 - cloudOffset - cameraX * 0.3) % (canvas.width + 600)) - 300;
+                const cloudY = 80 + (i % 5) * 140;
+                const cloudScale = 0.7 + Math.sin(Date.now() / 2000 + i) * 0.25;
+                drawCloud(cloudX, cloudY, cloudScale);
+            }
+
+            // Вода
+            const waterY = canvas.height - WATER_LEVEL;
+            const waterGradient = ctx.createLinearGradient(0, waterY, 0, canvas.height);
+            waterGradient.addColorStop(0, '#0d4a6e');
+            waterGradient.addColorStop(1, '#083550');
+            ctx.fillStyle = waterGradient;
+            ctx.fillRect(0, waterY, canvas.width, WATER_LEVEL);
+
+            // Волны
+            ctx.strokeStyle = 'rgba(10, 53, 80, 0.8)';
+            ctx.lineWidth = 3;
+            for (let i = 0; i < canvas.width / 50 + 2; i++) {
+                const waveX = (i * 50 - (cameraX * 0.5) % 50);
+                ctx.beginPath();
+                ctx.moveTo(waveX, waterY + Math.sin(Date.now() / 200 + waveX) * 3);
+                ctx.quadraticCurveTo(waveX + 12, waterY + 10, waveX + 25, waterY);
+                ctx.quadraticCurveTo(waveX + 37, waterY - 10, waveX + 50, waterY);
+                ctx.stroke();
+            }
+
+            // Авианосец стартовый
+            const startShipX = 200 - cameraX;
+            if (startShipX > -SHIP_WIDTH && startShipX < canvas.width + SHIP_WIDTH) {
+                drawCarrier(startShipX, waterY);
+            }
+
+            // Корабли (спавнятся после края экрана)
+            flightData.ships.forEach((ship, index) => {
+                const shipScreenX = 200 + ship.distance - cameraX;
+
+                if (shipScreenX > -SHIP_WIDTH && shipScreenX < canvas.width + SHIP_WIDTH) {
+                    drawCarrier(shipScreenX, waterY);
+                }
+            });
+
+            // События (спавнятся после края экрана и не слишком низко)
+            flightData.events.forEach(event => {
+                const eventScreenX = 200 + event.distance - cameraX;
+                const eventY = canvas.height * event.height;
+
+                if (eventScreenX > -150 && eventScreenX < canvas.width + 150 && !passedEvents.has(event.distance)) {
+                    if (event.type === 'multiplier') {
+                        drawMultiplierIcon(eventScreenX, eventY, event.value);
+                    } else if (event.type === 'bomb') {
+                        drawBomb(eventScreenX, eventY);
+                    }
+                }
+
+                // Проверка столкновения (хитбоксы)
+                if (!passedEvents.has(event.distance) && 
+                    Math.abs(eventScreenX - planeScreenX) < (PLANE_WIDTH/2 + 40) && 
+                    Math.abs(eventY - planeY) < (PLANE_HEIGHT/2 + 40)) {
+
+                    passedEvents.add(event.distance);
+
+                    if (event.type === 'multiplier') {
+                        playSound('collect');
+                        currentMultiplier = event.multiplier;
+                        engineActive = true;
+                        engineTimer = event.engine_time;
+
+                        glowEffects.push({
+                            x: eventScreenX,
+                            y: eventY,
+                            life: 1.0,
+                            value: event.value
+                        });
+                    } else if (event.type === 'bomb') {
+                        playSound('explosion');
+                        currentMultiplier = event.multiplier;
+
+                        explosions.push({
+                            x: eventScreenX,
+                            y: eventY,
+                            life: 1.0
+                        });
+                    }
+                }
+            });
+
+            // Дым от двигателя
+            if ((engineActive || isClimbing) && Math.random() < 0.3) {
+                smokeParticles.push({
+                    x: planeScreenX - PLANE_WIDTH/2,
+                    y: planeY,
+                    life: 1.0,
+                    vx: -2,
+                    vy: random(-0.5, 0.5)
+                });
+            }
+
+            // Рисуем дым
+            smokeParticles = smokeParticles.filter(smoke => {
+                smoke.life -= 0.015;
+                smoke.x += smoke.vx;
+                smoke.y += smoke.vy;
+                if (smoke.life > 0) {
+                    ctx.fillStyle = `rgba(200, 200, 200, ${smoke.life * 0.5})`;
+                    ctx.beginPath();
+                    ctx.arc(smoke.x, smoke.y, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    return true;
+                }
+                return false;
+            });
+
+            // Рисуем взрывы
+            explosions = explosions.filter(exp => {
+                exp.life -= 0.025;
+                if (exp.life > 0) {
+                    drawExplosion(exp.x, exp.y, exp.life);
+                    return true;
+                }
+                return false;
+            });
+
+            // Рисуем эффекты свечения
+            glowEffects = glowEffects.filter(glow => {
+                glow.life -= 0.02;
+                if (glow.life > 0) {
+                    drawGlowEffect(glow.x, glow.y, glow.life, glow.value);
+                    return true;
+                }
+                return false;
+            });
+
+            // Самолет
+            drawPlane(planeScreenX, planeY, planeAngle);
+
+            // Обновление статистики
+            document.getElementById('distanceDisplay').textContent = Math.round(currentDistance) + 'm';
+            document.getElementById('multiplierDisplay').textContent = currentMultiplier.toFixed(2) + 'x';
+
+            // Проверка условий завершения
+            const lastShip = flightData.ships[flightData.ships.length - 1];
+
+            if (flightData.landed && 
+                Math.abs(lastShip.distance - currentDistance) < 200 && 
+                planeY > waterY - 180 && planeY < waterY - 60) {
+                isFlying = false;
+                playSound('win');
+                showResult(true);
+                return;
+            }
+
+            if (planeY > waterY - 30) {
+                isFlying = false;
+                playSound('crash');
+                showResult(false);
+                return;
+            }
+
+            animationId = requestAnimationFrame(drawFlight);
+        }
+
+        function random(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function drawCloud(x, y, scale = 1) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(scale, scale);
+            ctx.globalAlpha = 0.7;
+            ctx.beginPath();
+            ctx.arc(0, 0, 40, 0, Math.PI * 2);
+            ctx.arc(40, 0, 50, 0, Math.PI * 2);
+            ctx.arc(80, 0, 40, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            ctx.restore();
+        }
+
+        function drawCarrier(x, waterY) {
+            if (shipImg.complete) {
+                ctx.save();
+                ctx.translate(x, waterY - SHIP_HEIGHT/2);
+                // Тень корабля
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.fillRect(-SHIP_WIDTH/2 + 10, 10, SHIP_WIDTH, SHIP_HEIGHT);
+                // Корабль
+                ctx.drawImage(shipImg, -SHIP_WIDTH/2, 0, SHIP_WIDTH, SHIP_HEIGHT);
+                ctx.restore();
+            }
+        }
+
+        function drawPlane(x, y, angle) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+
+            if (planeImg.complete) {
+                // Тень самолета
+                ctx.globalAlpha = 0.3;
+                ctx.fillStyle = '#000';
+                ctx.fillRect(-PLANE_WIDTH/2 + 10, 10, PLANE_WIDTH, PLANE_HEIGHT);
+                ctx.globalAlpha = 1;
+
+                // Самолет
+                ctx.drawImage(planeImg, -PLANE_WIDTH/2, -PLANE_HEIGHT/2, PLANE_WIDTH, PLANE_HEIGHT);
+
+                // Пропеллер (если активен)
+                if (engineActive || isClimbing) {
+                    ctx.strokeStyle = 'rgba(100, 100, 100, 0.6)';
+                    ctx.lineWidth = 6;
+                    const prop = (Date.now() / 8) % 360;
+                    for (let i = 0; i < 3; i++) {
+                        const a = (prop + i * 120) * Math.PI / 180;
+                        ctx.beginPath();
+                        ctx.moveTo(PLANE_WIDTH/2 - 20, 0);
+                        ctx.lineTo(PLANE_WIDTH/2 - 20 + Math.cos(a) * 40, Math.sin(a) * 40);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            ctx.restore();
+        }
+
+        function drawMultiplierIcon(x, y, value) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            // Неоновое сияние (анимированное)
+            const time = Date.now() / 200;
+            for (let i = 4; i > 0; i--) {
+                ctx.fillStyle = `rgba(0, 242, 255, ${0.08 * i})`;
+                ctx.beginPath();
+                for (let j = 0; j < 8; j++) {
+                    const angle = (j / 8) * Math.PI * 2;
+                    const radius = 55 + i * 20 + Math.sin(time + j) * 15;
+                    const px = Math.cos(angle) * radius;
+                    const py = Math.sin(angle) * radius;
+                    if (j === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // Звезда
+            ctx.fillStyle = '#00f2ff';
+            ctx.shadowBlur = 30;
+            ctx.shadowColor = '#00f2ff';
+            ctx.beginPath();
+            for (let i = 0; i < 5; i++) {
+                const angle = (i / 5) * Math.PI * 2 - Math.PI / 2;
+                const radius = i % 2 === 0 ? 40 : 20;
+                const px = Math.cos(angle) * radius;
+                const py = Math.sin(angle) * radius;
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Текст
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 26px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('×' + value, 0, 0);
+
+            ctx.restore();
+        }
+
+        function drawBomb(x, y) {
+            ctx.font = 'bold 55px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // Свечение
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = 'rgba(255, 0, 0, 0.5)';
+
+            // Тень
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.fillText('💣', x + 4, y + 4);
+
+            // Бомба
+            ctx.fillStyle = '#000';
+            ctx.fillText('💣', x, y);
+
+            ctx.shadowBlur = 0;
+        }
+
+        function drawExplosion(x, y, life) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            const size = (1 - life) * 120;
+
+            // Оранжевая вспышка
+            ctx.fillStyle = `rgba(255, 100, 0, ${life * 0.8})`;
+            ctx.beginPath();
+            ctx.arc(0, 0, size, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Желтая вспышка
+            ctx.fillStyle = `rgba(255, 200, 0, ${life})`;
+            ctx.beginPath();
+            ctx.arc(0, 0, size * 0.6, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Белый центр
+            ctx.fillStyle = `rgba(255, 255, 255, ${life * 0.6})`;
+            ctx.beginPath();
+            ctx.arc(0, 0, size * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Частицы
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                const dist = size * 1.5;
+                ctx.fillStyle = `rgba(255, 150, 0, ${life})`;
+                ctx.beginPath();
+                ctx.arc(Math.cos(angle) * dist, Math.sin(angle) * dist, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.restore();
+        }
+
+        function drawGlowEffect(x, y, life, value) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            // Сияющие частицы
+            ctx.fillStyle = `rgba(0, 242, 255, ${life * 0.8})`;
+            ctx.shadowBlur = 40;
+            ctx.shadowColor = '#00f2ff';
+
+            for (let i = 0; i < 12; i++) {
+                const angle = (i / 12) * Math.PI * 2 + (1 - life) * 3;
+                const dist = (1 - life) * 100;
+                const px = Math.cos(angle) * dist;
+                const py = Math.sin(angle) * dist;
+                ctx.beginPath();
+                ctx.arc(px, py, 6, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Текст множителя
+            if (life > 0.5) {
+                ctx.font = 'bold 30px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = `rgba(255, 215, 0, ${(life - 0.5) * 2})`;
+                ctx.fillText('+×' + value, 0, -50);
+            }
+
+            ctx.shadowBlur = 0;
+            ctx.restore();
+        }
+
+        async function showResult(success) {
+            const popup = document.getElementById('resultPopup');
+            const title = document.getElementById('resultTitle');
+            const amount = document.getElementById('resultAmount');
+
+            popup.classList.remove('win', 'lose');
+
+            if (success && currentMultiplier > 0) {
+                popup.classList.add('win');
+                title.textContent = '{{ t.landed|upper }}! 🎉';
+
+                const res = await fetch('/aviator/cashout', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                const data = await res.json();
+
+                if (data.status === 'success') {
+                    amount.textContent = '+₽' + data.win_amount;
+                    syncGlobalBalance();
+                } else {
+                    amount.textContent = 'Error';
+                }
+            } else {
+                popup.classList.add('lose');
+                title.textContent = '{{ t.crashed_water|upper }}! 💥';
+                amount.textContent = '{{ t.loss|upper }}';
+            }
+
+            popup.classList.add('show');
+
+            setTimeout(() => {
+                popup.classList.remove('show');
+                resetFlight();
+            }, 4000);
+        }
+
+        function resetFlight() {
+            isFlying = false;
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+
+            betBtn.disabled = false;
+
+            document.getElementById('distanceDisplay').textContent = '0m';
+            document.getElementById('multiplierDisplay').textContent = '1.00x';
+
+            statusLabel.innerText = "{{ t.ready_takeoff }}...";
+            statusLabel.style.color = '#888';
+
+            drawInitialScene();
+        }
+
+        drawInitialScene();
+    </script>
+</body>
+</html>

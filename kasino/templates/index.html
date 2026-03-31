@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEO-PULSE 2025: AUTH</title>
+    <style>
+        :root { --neon: #bc13fe; --accent: #00f2ff; --green: #00ff88; --glass: rgba(255, 255, 255, 0.05); }
+
+        body {
+            background: radial-gradient(circle at 50% 50%, #1a0b2e 0%, #05010a 100%);
+            color: #fff; font-family: 'Inter', sans-serif;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; margin: 0; overflow: hidden;
+        }
+
+        body::before {
+            content: ""; position: absolute; width: 100%; height: 2px;
+            background: rgba(0, 242, 255, 0.1);
+            top: 0; left: 0; animation: scan 4s linear infinite; pointer-events: none;
+        }
+
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+
+        .lang-switcher {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .lang-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .lang-btn:hover {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .glass-panel {
+            background: var(--glass); backdrop-filter: blur(25px);
+            border: 2px solid var(--neon); border-radius: 24px;
+            padding: 40px; width: 400px; text-align: center;
+            box-shadow: 0 0 50px rgba(188, 19, 254, 0.2), inset 0 0 20px rgba(188, 19, 254, 0.1);
+            transform: scale(0.9); opacity: 0;
+            animation: appear 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes appear {
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        h1 { font-size: 32px; font-weight: 900; margin: 0; text-shadow: 0 0 20px var(--accent); }
+
+        .tab-container {
+            display: flex;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: rgba(0,0,0,0.3);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: bold;
+            transition: 0.3s;
+            color: #888;
+            border: none;
+            background: none;
+            font-size: 14px;
+        }
+
+        .tab.active {
+            background: var(--neon);
+            color: white;
+        }
+
+        .form-container {
+            margin-top: 20px;
+        }
+
+        .form-page {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .form-page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-group { margin-top: 15px; position: relative; }
+
+        input {
+            width: 100%; padding: 15px; background: rgba(0, 0, 0, 0.6); color: #fff;
+            border: 1px solid rgba(188, 19, 254, 0.4); border-radius: 12px;
+            margin-bottom: 15px; text-align: center; outline: none; box-sizing: border-box;
+            transition: 0.3s; font-size: 16px; letter-spacing: 1px;
+        }
+
+        input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .btn-modern {
+            background: linear-gradient(135deg, var(--neon) 0%, #7000ff 100%);
+            border: none; border-radius: 16px; color: white; font-weight: 700;
+            width: 100%; height: 60px; cursor: pointer; font-size: 16px;
+            text-transform: uppercase; letter-spacing: 2px;
+            transition: 0.4s; position: relative; overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .btn-green {
+            background: linear-gradient(135deg, var(--green) 0%, #00a859 100%);
+        }
+
+        .btn-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(112, 0, 255, 0.5);
+            filter: brightness(1.1);
+        }
+
+        .btn-modern:active { transform: translateY(1px); }
+
+        .loading-dots::after {
+            content: '.';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60% { content: '...'; }
+        }
+
+        .captcha-container {
+            background: rgba(0,0,0,0.5);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border: 1px solid var(--accent);
+        }
+
+        .captcha-question {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 10px;
+            font-family: monospace;
+            text-align: center;
+        }
+
+        .captcha-images {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin: 15px 0;
+        }
+
+        .captcha-image {
+            width: 100%;
+            height: 60px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .captcha-image:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .captcha-image.selected {
+            border-color: var(--accent);
+            background: rgba(0, 242, 255, 0.2);
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        .captcha-refresh {
+            background: none;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 5px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 5px;
+            transition: 0.3s;
+        }
+
+        .captcha-refresh:hover {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .error-message {
+            color: #ff4444;
+            font-size: 12px;
+            margin-top: 5px;
+            min-height: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="lang-switcher">
+        <button class="lang-btn" onclick="location.href='/change_lang/en'">EN</button>
+        <button class="lang-btn" onclick="location.href='/change_lang/ru'">RU</button>
+    </div>
+
+    <div class="glass-panel">
+        <h1 style="color:var(--accent); letter-spacing:4px;">NEO-PULSE</h1>
+        <p style="color:rgba(255,255,255,0.4); font-size:11px; margin-bottom:10px; letter-spacing: 2px;">{{ t.secure_access }}</p>
+
+        <div class="tab-container">
+            <button class="tab active" onclick="switchTab('login')">{{ t.login }}</button>
+            <button class="tab" onclick="switchTab('register')">{{ t.register }}</button>
+        </div>
+
+        <div class="form-container">
+            <div id="login-form" class="form-page active">
+                <div class="input-group">
+                    <input type="text" id="loginUsername" placeholder="{{ t.username }}" autocomplete="username">
+                    <input type="password" id="loginPassword" placeholder="{{ t.password }}" autocomplete="current-password">
+
+                    <div class="captcha-container" id="loginCaptchaContainer">
+                        <div class="captcha-question" id="loginCaptchaInstruction">{{ login_captcha.instruction }}</div>
+                        <div class="captcha-images" id="loginCaptchaImages">
+                            {% for image in login_captcha.images %}
+                            <div class="captcha-image" data-index="{{ loop.index0 }}" onclick="toggleLoginCaptchaImage(this)">
+                                {{ image }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button class="captcha-refresh" onclick="refreshLoginCaptcha()">🔄 {{ t.new_test }}</button>
+                    </div>
+                </div>
+                <div class="error-message" id="loginError"></div>
+                <button id="loginBtn" onclick="login()" class="btn-modern">{{ t.login_account }}</button>
+            </div>
+
+            <div id="register-form" class="form-page">
+                <div class="input-group">
+                    <input type="text" id="regUsername" placeholder="{{ t.username }}" autocomplete="username">
+                    <input type="password" id="regPassword" placeholder="{{ t.password }}" autocomplete="new-password">
+
+                    <div class="captcha-container" id="registerCaptchaContainer">
+                        <div class="captcha-question" id="registerCaptchaInstruction">{{ register_captcha.instruction }}</div>
+                        <div class="captcha-images" id="registerCaptchaImages">
+                            {% for image in register_captcha.images %}
+                            <div class="captcha-image" data-index="{{ loop.index0 }}" onclick="toggleRegisterCaptchaImage(this)">
+                                {{ image }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button class="captcha-refresh" onclick="refreshRegisterCaptcha()">🔄 {{ t.new_test }}</button>
+                    </div>
+                </div>
+                <div class="error-message" id="registerError"></div>
+                <button id="registerBtn" onclick="register()" class="btn-modern btn-green">{{ t.create_account }}</button>
+            </div>
+        </div>
+
+        <p style="font-size: 10px; color: #555; margin-top: 20px; line-height: 1.6;">
+            * {{ t.captcha_instruction }}<br>
+            © {{ t.system_version }}: 2.0.25
+        </p>
+    </div>
+
+    <script>
+        let loginSelectedCaptchaImages = [];
+        let registerSelectedCaptchaImages = [];
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            document.getElementById('login-form').classList.remove('active');
+            document.getElementById('register-form').classList.remove('active');
+            document.getElementById(tabName + '-form').classList.add('active');
+
+            document.getElementById('loginError').textContent = '';
+            document.getElementById('registerError').textContent = '';
+        }
+
+        function toggleLoginCaptchaImage(element) {
+            const index = parseInt(element.getAttribute('data-index'));
+            const isSelected = element.classList.contains('selected');
+
+            if (isSelected) {
+                element.classList.remove('selected');
+                loginSelectedCaptchaImages = loginSelectedCaptchaImages.filter(i => i !== index);
+            } else {
+                element.classList.add('selected');
+                loginSelectedCaptchaImages.push(index);
+            }
+        }
+
+        function toggleRegisterCaptchaImage(element) {
+            const index = parseInt(element.getAttribute('data-index'));
+            const isSelected = element.classList.contains('selected');
+
+            if (isSelected) {
+                element.classList.remove('selected');
+                registerSelectedCaptchaImages = registerSelectedCaptchaImages.filter(i => i !== index);
+            } else {
+                element.classList.add('selected');
+                registerSelectedCaptchaImages.push(index);
+            }
+        }
+
+        async function refreshLoginCaptcha() {
+            try {
+                const response = await fetch('/new_login_captcha');
+                const data = await response.json();
+
+                document.getElementById('loginCaptchaInstruction').textContent = data.instruction;
+
+                const imagesContainer = document.getElementById('loginCaptchaImages');
+                imagesContainer.innerHTML = '';
+
+                data.images.forEach((image, index) => {
+                    const imgDiv = document.createElement('div');
+                    imgDiv.className = 'captcha-image';
+                    imgDiv.setAttribute('data-index', index);
+                    imgDiv.textContent = image;
+                    imgDiv.onclick = function() { toggleLoginCaptchaImage(this); };
+                    imagesContainer.appendChild(imgDiv);
+                });
+
+                loginSelectedCaptchaImages = [];
+
+            } catch (error) {
+                alert('Error refreshing captcha');
+            }
+        }
+
+        async function refreshRegisterCaptcha() {
+            try {
+                const response = await fetch('/new_register_captcha');
+                const data = await response.json();
+
+                document.getElementById('registerCaptchaInstruction').textContent = data.instruction;
+
+                const imagesContainer = document.getElementById('registerCaptchaImages');
+                imagesContainer.innerHTML = '';
+
+                data.images.forEach((image, index) => {
+                    const imgDiv = document.createElement('div');
+                    imgDiv.className = 'captcha-image';
+                    imgDiv.setAttribute('data-index', index);
+                    imgDiv.textContent = image;
+                    imgDiv.onclick = function() { toggleRegisterCaptchaImage(this); };
+                    imagesContainer.appendChild(imgDiv);
+                });
+
+                registerSelectedCaptchaImages = [];
+
+            } catch (error) {
+                alert('Error refreshing captcha');
+            }
+        }
+
+        async function login() {
+            const btn = document.getElementById('loginBtn');
+            const error = document.getElementById('loginError');
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            if (!username || !password || loginSelectedCaptchaImages.length === 0) {
+                error.textContent = 'Fill all fields and select images';
+                shakeEffect();
+                return;
+            }
+
+            btn.disabled = true;
+            btn.classList.add('loading-dots');
+            btn.textContent = '{{ t.connecting }}';
+            error.textContent = '';
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        username: username,
+                        password: password,
+                        captcha_selected: loginSelectedCaptchaImages
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    btn.textContent = '{{ t.access_granted }}';
+                    btn.style.background = 'linear-gradient(135deg, #00ff88, #00a859)';
+                    setTimeout(() => {
+                        window.location.href = '/hub';
+                    }, 800);
+                } else {
+                    error.textContent = data.message || 'Login error';
+
+                    if (data.new_captcha) {
+                        document.getElementById('loginCaptchaInstruction').textContent = data.new_captcha.instruction;
+
+                        const imagesContainer = document.getElementById('loginCaptchaImages');
+                        imagesContainer.innerHTML = '';
+
+                        data.new_captcha.images.forEach((image, index) => {
+                            const imgDiv = document.createElement('div');
+                            imgDiv.className = 'captcha-image';
+                            imgDiv.setAttribute('data-index', index);
+                            imgDiv.textContent = image;
+                            imgDiv.onclick = function() { toggleLoginCaptchaImage(this); };
+                            imagesContainer.appendChild(imgDiv);
+                        });
+
+                        loginSelectedCaptchaImages = [];
+                    }
+
+                    resetButton(btn, '{{ t.login_account }}');
+                }
+            } catch (error) {
+                error.textContent = 'Network error';
+                resetButton(btn, '{{ t.login_account }}');
+            }
+        }
+
+        async function register() {
+            const btn = document.getElementById('registerBtn');
+            const error = document.getElementById('registerError');
+            const username = document.getElementById('regUsername').value.trim();
+            const password = document.getElementById('regPassword').value.trim();
+
+            if (!username || !password || registerSelectedCaptchaImages.length === 0) {
+                error.textContent = 'Fill all fields and select images';
+                shakeEffect();
+                return;
+            }
+
+            if (username.length < 3) {
+                error.textContent = 'Username must be at least 3 characters';
+                shakeEffect();
+                return;
+            }
+
+            if (password.length < 4) {
+                error.textContent = 'Password must be at least 4 characters';
+                shakeEffect();
+                return;
+            }
+
+            btn.disabled = true;
+            btn.classList.add('loading-dots');
+            btn.textContent = '{{ t.registering }}';
+            error.textContent = '';
+
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        username: username,
+                        password: password,
+                        captcha_selected: registerSelectedCaptchaImages
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    btn.textContent = '{{ t.account_created }}';
+                    btn.style.background = 'linear-gradient(135deg, #00ff88, #00a859)';
+                    setTimeout(() => {
+                        window.location.href = '/hub';
+                    }, 800);
+                } else {
+                    error.textContent = data.message || 'Registration error';
+
+                    if (data.new_captcha) {
+                        document.getElementById('registerCaptchaInstruction').textContent = data.new_captcha.instruction;
+
+                        const imagesContainer = document.getElementById('registerCaptchaImages');
+                        imagesContainer.innerHTML = '';
+
+                        data.new_captcha.images.forEach((image, index) => {
+                            const imgDiv = document.createElement('div');
+                            imgDiv.className = 'captcha-image';
+                            imgDiv.setAttribute('data-index', index);
+                            imgDiv.textContent = image;
+                            imgDiv.onclick = function() { toggleRegisterCaptchaImage(this); };
+                            imagesContainer.appendChild(imgDiv);
+                        });
+
+                        registerSelectedCaptchaImages = [];
+                    }
+
+                    resetButton(btn, '{{ t.create_account }}');
+                }
+            } catch (error) {
+                error.textContent = 'Network error';
+                resetButton(btn, '{{ t.create_account }}');
+            }
+        }
+
+        function resetButton(btn, text) {
+            btn.disabled = false;
+            btn.classList.remove('loading-dots');
+            btn.textContent = text;
+        }
+
+        function shakeEffect() {
+            const panel = document.querySelector('.glass-panel');
+            panel.style.animation = 'none';
+            setTimeout(() => {
+                panel.style.animation = 'shake 0.4s';
+            }, 10);
+        }
+
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                if (document.getElementById('login-form').classList.contains('active')) {
+                    login();
+                } else {
+                    register();
+                }
+            }
+        });
+
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                25% { transform: translateX(-10px); }
+                75% { transform: translateX(10px); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

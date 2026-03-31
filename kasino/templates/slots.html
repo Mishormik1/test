@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEO-SLOTS</title>
+    <style>
+        :root { --gold: #ffd700; --neon: #bc13fe; --accent: #00f2ff; --red: #ff0055; --glass: rgba(255, 255, 255, 0.05); --border: rgba(255, 255, 255, 0.1); }
+        body { 
+            background: radial-gradient(circle at 50% 50%, #1a0b2e 0%, #05010a 100%);
+            color: #fff; font-family: 'Inter', sans-serif; 
+            display: flex; justify-content: center; align-items: center; 
+            height: 100vh; margin: 0; overflow: hidden;
+        }
+        .layout { display: flex; gap: 20px; width: 96vw; height: 92vh; z-index: 1; }
+        .glass-panel { background: var(--glass); backdrop-filter: blur(25px); border: 1px solid var(--border); border-radius: 24px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+        .side { width: 260px; }
+        .center { flex-grow: 1; border: 1px solid rgba(188, 19, 254, 0.2); position: relative; }
+
+        .reels-container { background: rgba(0, 0, 0, 0.8); padding: 15px; border-radius: 30px; border: 2px solid rgba(255, 215, 0, 0.15); display: flex; gap: 10px; position: relative; margin-top: 15px; justify-content: center; }
+        .reel { width: 110px; height: 575px; background: linear-gradient(180deg, #050505 0%, #151515 50%, #050505 100%); overflow: hidden; position: relative; border-radius: 12px; }
+        .track { position: absolute; width: 100%; top: 0; left: 0; display: flex; flex-direction: column; will-change: transform; }
+        .symbol { height: 115px; display: flex; justify-content: center; align-items: center; font-size: 65px; }
+
+        .btn-modern { background: linear-gradient(135deg, var(--neon) 0%, #7000ff 100%); border: none; border-radius: 16px; color: white; font-weight: 700; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; }
+        .btn-modern:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(112, 0, 255, 0.4); }
+        .btn-modern:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-spin { width: 220px; height: 75px; font-size: 26px; }
+        .spd-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #888; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 11px; }
+        .spd-btn.active { background: var(--accent); color: #000; font-weight: bold; box-shadow: 0 0 15px var(--accent); }
+
+        .bal-glow { color: var(--gold); text-shadow: 0 0 20px rgba(255, 215, 0, 0.4); font-size: 32px; font-weight: 800; font-family: monospace; }
+        .win-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.5); font-size: 80px; color: #fff; font-weight: 900; opacity: 0; pointer-events: none; z-index: 100; text-shadow: 0 0 50px var(--neon); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .win-overlay.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+        #lineCanvas { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); z-index: 10; pointer-events: none; }
+
+        .bet-chip { padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #ccc; cursor: pointer; text-align: center; transition: all 0.3s; font-size: 13px; margin: 3px; }
+        .bet-chip:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
+        .bet-chip.active { border-color: var(--neon); color: var(--neon); box-shadow: 0 0 10px var(--neon); background: rgba(188, 19, 254, 0.1); }
+
+        .win-item { display: flex; flex-direction: column; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 8px; border-left: 3px solid var(--accent); animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+        .avatar-tiny {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 1px solid var(--accent);
+            object-fit: cover;
+            margin-right: 10px;
+        }
+
+        .win-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .user-name {
+            font-weight: bold;
+            color: var(--accent);
+            font-size: 12px;
+        }
+
+        .user-win {
+            color: var(--gold);
+            font-weight: 800;
+            font-size: 14px;
+        }
+
+        .win-details-overlay {
+            position: absolute;
+            top: 60%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid var(--gold);
+            border-radius: 20px;
+            padding: 20px 40px;
+            z-index: 101;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.4s;
+            text-align: center;
+        }
+
+        .win-details-overlay.show {
+            opacity: 1;
+        }
+
+        .win-details-overlay .amount {
+            font-size: 48px;
+            color: var(--gold);
+            font-weight: 900;
+            margin: 10px 0;
+        }
+
+        .win-details-overlay .multiplier {
+            font-size: 32px;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .bet-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .auto-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: #888;
+            padding: 12px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .auto-btn.active {
+            background: var(--green);
+            color: #000;
+            border-color: var(--green);
+            box-shadow: 0 0 15px var(--green);
+        }
+    </style>
+</head>
+<body>
+
+<div class="layout">
+    <aside class="glass-panel side">
+        <button onclick="location.href='/hub'" class="btn-modern" style="background: rgba(255,255,255,0.1); border: 1px solid var(--border); height: 40px; margin-bottom: 20px; font-size: 12px;">⬅ {{ t.back_to_hub|upper }}</button>
+
+        <h3 style="text-align:center; color:var(--accent); letter-spacing:2px; font-size: 14px;">📜 {{ t.multiplier|upper }}</h3>
+        <div style="flex-grow: 1; overflow-y: auto; padding-right: 5px;">
+            {% for s, m in paytable.items() %}
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                <span style="font-size:24px;">{{s}}</span>
+                <span style="color:var(--gold); font-weight:bold;">x{{m}}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </aside>
+
+    <main class="glass-panel center">
+        <div id="winMsg" class="win-overlay">{{ t.big_win|upper }}!</div>
+        <div id="winDetails" class="win-details-overlay">
+            <div style="font-size: 20px; color: #888;">{{ t.win|upper }}</div>
+            <div class="amount" id="winAmount">+₽0</div>
+            <div class="multiplier" id="winMultiplier">0x</div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items: flex-start;">
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div id="spdContainer" style="display:flex; gap:5px;"></div>
+            </div>
+
+            <div style="text-align:right;">
+                <div style="font-size:12px; color:#888; font-weight: bold;">{{ t.your_balance|upper }}</div>
+                <div class="bal-glow"><span id="balDisplay">₽0</span></div>
+            </div>
+        </div>
+
+        <div class="reels-container">
+            <canvas id="lineCanvas" width="600" height="575"></canvas>
+            <div id="reels" style="display:flex; gap:10px;"></div>
+        </div>
+
+        <div style="display:flex; flex-direction: column; align-items:center; gap:15px; margin-top:20px;">
+            <div style="width: 100%; max-width: 500px;">
+                <div style="font-size:12px; color:#888; text-align:center; margin-bottom:5px;">{{ t.select_amount|upper }}</div>
+                <div class="bet-grid" id="betGrid"></div>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button id="spinBtn" class="btn-modern btn-spin" onclick="handleSpin()">🎰 {{ t.spin|upper }}</button>
+                <button id="autoBtn" class="auto-btn" onclick="toggleAuto()">{{ t.auto|upper }}</button>
+            </div>
+        </div>
+    </main>
+
+    <aside class="glass-panel side">
+        <h3 style="text-align:center; color:var(--accent); letter-spacing:2px; font-size: 14px;">🚀 {{ t.recent_wins|upper }}</h3>
+        <div id="recentWins" style="flex-grow:1; overflow-y:auto; padding-right:5px; font-size: 12px;"></div>
+    </aside>
+</div>
+
+<script>
+    const SYMBOLS = ['🍒', '🍇', '🍉', '🔔', '🍀', '7️⃣', '💎', '⭐'];
+    let isSpinning = false, curSpd = 1, tracks = [];
+    let selectedBet = {{ bet_values[0] }};
+    let autoMode = false;
+    const canvas = document.getElementById('lineCanvas'), ctx = canvas.getContext('2d');
+
+    const AudioEngine = {
+        ctx: new (window.AudioContext || window.webkitAudioContext)(),
+        playSfx(freq, type, dur, volMult = 1) {
+            if (this.ctx.state === 'suspended') this.ctx.resume();
+            const osc = this.ctx.createOscillator(); const g = this.ctx.createGain();
+            osc.type = type; osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            g.gain.setValueAtTime(0.1 * volMult, this.ctx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + dur);
+            osc.connect(g); g.connect(this.ctx.destination);
+            osc.start(); osc.stop(this.ctx.currentTime + dur);
+        }
+    };
+
+    async function syncGlobalBalance() {
+        try {
+            const res = await fetch('/get_balance');
+            const data = await res.json();
+            if (data.balance_display !== undefined) {
+                document.getElementById('balDisplay').innerText = '₽' + data.balance_display;
+            }
+        } catch (e) { console.error("Balance sync error"); }
+    }
+    setInterval(syncGlobalBalance, 3000);
+    syncGlobalBalance();
+
+    const rBox = document.getElementById('reels');
+    for(let i=0; i<5; i++) {
+        const r = document.createElement('div'); r.className='reel';
+        const t = document.createElement('div'); t.className='track';
+        t.dataset.pos = 0;
+        for(let j=0; j<150; j++) {
+            const s = document.createElement('div'); s.className='symbol';
+            s.innerText = SYMBOLS[Math.floor(Math.random()*8)]; t.appendChild(s);
+        }
+        r.appendChild(t); rBox.appendChild(r); tracks.push(t);
+    }
+
+    const spdBox = document.getElementById('spdContainer');
+    [1, 2, 5, 10].forEach(v => {
+        const b = document.createElement('button'); b.className = 'spd-btn' + (v === 1 ? ' active' : '');
+        b.innerText = v + 'X'; b.onclick = () => { curSpd = v; document.querySelectorAll('.spd-btn').forEach(btn => btn.classList.remove('active')); b.classList.add('active'); };
+        spdBox.appendChild(b);
+    });
+
+    const betGrid = document.getElementById('betGrid');
+    const betValues = {{ bet_values|tojson }};
+    betValues.forEach((val, index) => {
+        const chip = document.createElement('div');
+        chip.className = 'bet-chip' + (index === 0 ? ' active' : '');
+
+        if (val === "1/4") {
+            chip.textContent = '1/4';
+        } else if (val === "1/2") {
+            chip.textContent = '1/2';
+        } else if (val === "ALL") {
+            chip.textContent = 'ALL';
+        } else {
+            chip.textContent = '₽' + val;
+        }
+
+        chip.onclick = () => {
+            document.querySelectorAll('.bet-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            selectedBet = val;
+        };
+        betGrid.appendChild(chip);
+    });
+
+    async function updateGlobalWins() {
+        try {
+            const res = await fetch('/get_wins');
+            const wins = await res.json();
+            document.getElementById('recentWins').innerHTML = wins.map(w => `
+                <div class="win-item">
+                    <div class="win-header">
+                        <img src="/avatar/${w.user}" class="avatar-tiny" onerror="this.src='/static/default_avatar.png'">
+                        <div class="user-info">
+                            <span class="user-name">${w.user}</span>
+                            <span class="user-win">+₽${w.amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, '.').replace('.', ',')}</span>
+                        </div>
+                        <span style="color: #888; font-size:9px;">${w.time}</span>
+                    </div>
+                    <span style="color: #aaa; font-size:10px;">${w.game}</span>
+                </div>`).join('');
+        } catch(e) { console.error(e); }
+    }
+    setInterval(updateGlobalWins, 5000); 
+    updateGlobalWins();
+
+    function toggleAuto() {
+        autoMode = !autoMode;
+        const autoBtn = document.getElementById('autoBtn');
+        if (autoMode) {
+            autoBtn.classList.add('active');
+            autoBtn.textContent = '{{ t.auto_on|upper }}';
+            if (!isSpinning) {
+                executeSpin();
+            }
+        } else {
+            autoBtn.classList.remove('active');
+            autoBtn.textContent = '{{ t.auto|upper }}';
+        }
+    }
+
+    function handleSpin() { 
+        if(!isSpinning) {
+            executeSpin(); 
+        }
+    }
+
+    async function executeSpin() {
+        if(isSpinning) return;
+        isSpinning = true;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        document.getElementById('winMsg').classList.remove('show');
+        document.getElementById('winDetails').classList.remove('show');
+
+        try {
+            const res = await fetch('/spin', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({bet: selectedBet}) });
+            const data = await res.json();
+
+            if(data.status === 'error') {
+                alert(data.message); 
+                isSpinning = false;
+                autoMode = false;
+                document.getElementById('autoBtn').classList.remove('active');
+                document.getElementById('autoBtn').textContent = '{{ t.auto|upper }}';
+                return;
+            }
+
+            tracks.forEach((t, i) => {
+                let start = parseInt(t.dataset.pos);
+                if (start > 100) { 
+                    t.style.transition = 'none'; 
+                    start = start % 20; 
+                    t.style.transform = `translateY(-${start * 115}px)`; 
+                    t.dataset.pos = start; 
+                    setTimeout(() => {}, 10);
+                }
+
+                let move = 30 + (i * 4), end = start + move;
+
+                const symbols = data.grid[i];
+                if (symbols && symbols.length === 5) {
+                    t.children[(end) % 150].innerText = symbols[4];
+                    t.children[(end+1) % 150].innerText = symbols[3];
+                    t.children[(end+2) % 150].innerText = symbols[2];
+                    t.children[(end+3) % 150].innerText = symbols[1];
+                    t.children[(end+4) % 150].innerText = symbols[0];
+                }
+
+                t.style.transition = `transform ${(1.2 + i*0.15)/curSpd}s cubic-bezier(0.45, 0.05, 0.55, 0.95)`;
+                t.style.transform = `translateY(-${end * 115}px)`;
+                t.dataset.pos = end;
+                setTimeout(() => AudioEngine.playSfx(200 - (i*25), 'sine', 0.1, 0.3), (1200 + i*150)/curSpd);
+            });
+
+            setTimeout(() => {
+                isSpinning = false;
+                syncGlobalBalance();
+                if(data.win_amount > 0) {
+                    AudioEngine.playSfx(440, 'square', 0.5, 0.5);
+
+                    const winMultiplier = data.win_amount / (selectedBet === "1/4" || selectedBet === "1/2" || selectedBet === "ALL" ? 1 : selectedBet);
+                    document.getElementById('winMsg').innerText = data.win_amount >= 1000 ? "{{ t.jackpot|upper }}!" : "{{ t.big_win|upper }}!";
+                    document.getElementById('winMsg').classList.add('show');
+
+                    let displayAmount = Math.round(data.win_amount);
+
+                    document.getElementById('winAmount').textContent = '+₽' + displayAmount;
+                    document.getElementById('winMultiplier').textContent = winMultiplier.toFixed(1) + 'x';
+                    document.getElementById('winDetails').classList.add('show');
+
+                    setTimeout(() => {
+                        document.getElementById('winMsg').classList.remove('show');
+                        document.getElementById('winDetails').classList.remove('show');
+                    }, 4000);
+
+                    data.win_lines.forEach(l => {
+                        ctx.beginPath(); ctx.lineWidth = 8; ctx.strokeStyle = l.color;
+                        ctx.setLineDash([10, 5]);
+                        l.path.forEach((r, c) => { const x = c * 122 + 55, y = r * 115 + 57; if(c === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
+                        ctx.stroke();
+                    });
+                    updateGlobalWins();
+                }
+
+                if (autoMode) {
+                    setTimeout(executeSpin, 1200 / curSpd);
+                }
+            }, 2000 / curSpd);
+
+        } catch(e) { 
+            isSpinning = false; 
+            autoMode = false;
+            document.getElementById('autoBtn').classList.remove('active');
+            document.getElementById('autoBtn').textContent = '{{ t.auto|upper }}';
+            console.error(e); 
+        }
+    }
+</script>
+</body>
+</html>

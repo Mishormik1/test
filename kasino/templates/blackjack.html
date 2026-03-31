@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>NEO-21</title>
+    <style>
+        :root { --neon: #00ff88; --accent: #00f2ff; --card-bg: #fff; --glass: rgba(255, 255, 255, 0.05); --border: rgba(255, 255, 255, 0.1); }
+        body { 
+            background: radial-gradient(circle at 50% 50%, #1a0b2e 0%, #05010a 100%);
+            color: white; font-family: 'Inter', sans-serif; 
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0;
+            overflow-x: hidden;
+        }
+
+        .header {
+            width: 100%; padding: 15px 30px; display: flex; 
+            justify-content: space-between; align-items: center; box-sizing: border-box;
+            background: rgba(0,0,0,0.5); border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .avatar-header {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--accent);
+            object-fit: cover;
+            margin-right: 10px;
+        }
+
+        .table-area {
+            position: relative; width: 95%; max-width: 1100px; height: 550px;
+            background: radial-gradient(circle at center, #1a4d32 0%, #051a0f 100%);
+            border-radius: 300px 300px 100px 100px; border: 12px solid #3d2b1f;
+            margin-top: 30px; box-shadow: 0 0 80px rgba(0,255,136,0.15), inset 0 0 100px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: space-between; padding-bottom: 40px;
+        }
+
+        .dealer-side { margin-top: 40px; text-align: center; }
+
+        .players-container { 
+            width: 100%; display: flex; justify-content: center; gap: 20px; 
+            padding: 0 40px; box-sizing: border-box; flex-wrap: wrap;
+        }
+
+        .player-spot { 
+            background: var(--glass); backdrop-filter: blur(10px); padding: 15px; border-radius: 20px;
+            border: 2px solid var(--border); text-align: center;
+            min-width: 160px; transition: all 0.4s ease;
+            position: relative;
+        }
+        .player-spot.active { border-color: var(--accent); box-shadow: 0 0 20px rgba(0,242,255,0.2); }
+
+        .win-anim { animation: win-glow 1s infinite alternate; border-color: var(--neon) !important; z-index: 10; }
+        .lose-anim { animation: lose-dim 1s infinite alternate; border-color: #ff4444 !important; opacity: 0.6; }
+
+        @keyframes win-glow { from { box-shadow: 0 0 10px var(--neon); transform: scale(1.05); } to { box-shadow: 0 0 30px var(--neon); transform: scale(1.08); } }
+        @keyframes lose-dim { from { transform: translateY(0); } to { transform: translateY(10px); } }
+
+        .hand { display: flex; justify-content: center; gap: 8px; min-height: 90px; margin: 10px 0; flex-wrap: wrap; }
+        .card {
+            width: 60px; height: 90px; background: var(--card-bg); color: black;
+            border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 22px; box-shadow: 3px 3px 10px rgba(0,0,0,0.4);
+            border: 1px solid #ddd;
+            animation: draw 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+        }
+
+        .card.hidden {
+            background: linear-gradient(135deg, #bc13fe, #7000ff);
+            color: white;
+            font-size: 16px;
+        }
+
+        @keyframes draw { 
+            from { transform: translateY(-50px) rotate(-15deg); opacity: 0; } 
+            to { transform: translateY(0) rotate(0); opacity: 1; } 
+        }
+
+        .score-badge { 
+            display: inline-block; background: #000; padding: 4px 12px; border-radius: 20px;
+            font-size: 14px; color: var(--neon); border: 1px solid var(--neon);
+            margin-bottom: 5px; font-weight: bold;
+        }
+
+        .player-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid var(--accent);
+            object-fit: cover;
+            margin-bottom: 10px;
+        }
+
+        .player-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .controls-panel { 
+            margin-top: 30px; background: var(--glass); backdrop-filter: blur(25px);
+            padding: 20px 40px; border-radius: 24px; border: 1px solid var(--border);
+            display: flex; gap: 20px; align-items: center; flex-wrap: wrap; justify-content: center;
+        }
+
+        .btn { padding: 14px 30px; border-radius: 16px; border: none; cursor: pointer; font-weight: 800; text-transform: uppercase; transition: 0.3s; }
+        .btn-hit { background: linear-gradient(135deg, var(--neon), #00a859); color: #000; }
+        .btn-stand { background: linear-gradient(135deg, #ff4444, #cc0000); color: white; }
+        .btn:hover:not(:disabled) { transform: translateY(-3px); filter: brightness(1.1); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .bet-chip { padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #ccc; cursor: pointer; text-align: center; transition: all 0.3s; font-size: 13px; margin: 3px; }
+        .bet-chip:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
+        .bet-chip.active { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px var(--accent); background: rgba(0, 242, 255, 0.1); }
+
+        .bet-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+        }
+
+        .timer-display {
+            position: fixed;
+            top: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 48px;
+            font-weight: 900;
+            color: var(--accent);
+            text-shadow: 0 0 20px var(--accent);
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 30px;
+            border-radius: 20px;
+            border: 2px solid var(--accent);
+        }
+
+        .result-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(0, 0, 0, 0.95);
+            border: 3px solid var(--gold);
+            border-radius: 24px;
+            padding: 40px 60px;
+            z-index: 3000;
+            text-align: center;
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .result-popup.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .result-popup.win {
+            border-color: var(--neon);
+        }
+
+        .result-popup.lose {
+            border-color: #ff4444;
+        }
+
+        .result-popup .title {
+            font-size: 48px;
+            font-weight: 900;
+            margin-bottom: 20px;
+        }
+
+        .result-popup.win .title {
+            color: var(--neon);
+            text-shadow: 0 0 30px var(--neon);
+        }
+
+        .result-popup.lose .title {
+            color: #ff4444;
+            text-shadow: 0 0 30px #ff4444;
+        }
+
+        .result-popup .details {
+            font-size: 20px;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <button onclick="location.href='/hub'" style="background: rgba(255,255,255,0.1); border: 1px solid var(--border); color:white; padding:8px 15px; border-radius:10px; cursor:pointer;">⬅ {{ t.back_to_hub|upper }}</button>
+        <div style="font-weight: bold; letter-spacing: 2px;">NEO-21 <span style="color:var(--neon)">TABLE</span></div>
+        <div style="display: flex; align-items: center;">
+            <img src="/avatar/{{ user }}" class="avatar-header" alt="Avatar" onerror="this.src='/static/default_avatar.png'">
+            <div style="color:var(--neon); font-size: 18px; font-weight: bold; font-family: monospace;">
+                <span id="user-balance">₽0</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="timer-display" id="timerDisplay">30</div>
+
+    <div class="table-area">
+        <div class="dealer-side">
+            <div class="score-badge">{{ t.dealer|upper }}: <span id="dealer-score">0</span></div>
+            <div id="dealer-hand" class="hand"></div>
+            <div style="color: #ffd700; font-size: 14px; margin-top: 5px;" id="dealer-bet-display"></div>
+        </div>
+        <div id="table-msg" style="color: rgba(255,255,255,0.3); font-size: 14px; text-transform: uppercase; letter-spacing: 3px;">{{ t.waiting_players|upper }}...</div>
+        <div class="players-container" id="players-grid"></div>
+    </div>
+
+    <div class="controls-panel">
+        <div id="bet-area">
+            <div style="font-size:12px; color:#888; text-align:center; margin-bottom:5px;">{{ t.select_amount|upper }}</div>
+            <div class="bet-grid" id="betGrid"></div>
+            <button class="btn" style="background: linear-gradient(135deg, var(--accent), #0072ff); color:#000; margin-top:10px; width: 100%;" onclick="playAction('start')">{{ t.place_bet|upper }}</button>
+        </div>
+        <div id="play-area" style="display:none; gap:15px;">
+            <button class="btn btn-hit" onclick="playAction('hit')">{{ t.hit|upper }}</button>
+            <button class="btn btn-stand" onclick="playAction('stand')">{{ t.stand|upper }}</button>
+        </div>
+    </div>
+
+    <div class="result-popup" id="resultPopup">
+        <div class="title" id="resultTitle"></div>
+        <div class="details" id="resultDetails"></div>
+    </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script>
+const myName = "{{ user }}";
+let cardCounts = { dealer: 0 };
+let socket;
+let selectedBet = {{ bet_values[0] }};
+let gameEndTimer = null;
+let syncInterval = null;
+
+function initSocket() {
+    socket = io();
+    socket.on('connect', () => {
+        socket.emit('bj_join');
+        startAutoSync();
+    });
+
+    socket.on('disconnect', () => {
+        stopAutoSync();
+    });
+
+    socket.on('bj_timer', (data) => {
+        document.getElementById('timerDisplay').textContent = data.time;
+        if (data.time <= 5) {
+            document.getElementById('timerDisplay').style.color = '#ff0055';
+        } else {
+            document.getElementById('timerDisplay').style.color = 'var(--accent)';
+        }
+    });
+
+    socket.on('bj_game_start', (data) => {
+        let displayBet = Math.round(data.dealer_bet);
+        document.getElementById('dealer-bet-display').textContent = `{{ t.place_bet }}: ₽${displayBet}`;
+        sync();
+    });
+
+    socket.on('bj_game_end', (data) => {
+        if (gameEndTimer) {
+            clearTimeout(gameEndTimer);
+        }
+
+        updateHandDisplay('dealer-hand', data.dealer_hand, 'dealer', false);
+        document.getElementById('dealer-score').innerText = data.dealer_score;
+
+        Object.keys(data.players_hands).forEach(name => {
+            updateHandDisplay(`hand-${name}`, data.players_hands[name], name, false);
+            const score = calculateScore(data.players_hands[name]);
+            const scoreElement = document.getElementById(`score-${name}`);
+            if (scoreElement) {
+                scoreElement.innerText = score;
+            }
+        });
+
+        const myResult = data.results[myName];
+        if (myResult) {
+            showResult(myResult, data.dealer_score);
+        }
+
+        gameEndTimer = setTimeout(() => {
+            document.getElementById('dealer-hand').innerHTML = '';
+            document.getElementById('dealer-score').innerText = '0';
+            document.getElementById('dealer-bet-display').textContent = '';
+            cardCounts['dealer'] = 0;
+
+            const grid = document.getElementById('players-grid');
+            Array.from(grid.children).forEach(node => {
+                const name = node.id.replace('spot-', '');
+                node.remove();
+                delete cardCounts[name];
+            });
+
+            sync();
+            syncGlobalBalance();
+        }, 3000);
+    });
+}
+
+function startAutoSync() {
+    if (syncInterval) {
+        clearInterval(syncInterval);
+    }
+    syncInterval = setInterval(() => {
+        sync();
+    }, 500);
+}
+
+function stopAutoSync() {
+    if (syncInterval) {
+        clearInterval(syncInterval);
+        syncInterval = null;
+    }
+}
+
+async function syncGlobalBalance() {
+    try {
+        const res = await fetch('/get_balance');
+        const data = await res.json();
+        if (data.balance_display !== undefined) {
+            document.getElementById('user-balance').innerText = '₽' + data.balance_display;
+        }
+    } catch (e) { console.error("Balance sync error"); }
+}
+setInterval(syncGlobalBalance, 2000);
+
+const betGrid = document.getElementById('betGrid');
+const betValues = {{ bet_values|tojson }};
+betValues.forEach((val, index) => {
+    const chip = document.createElement('div');
+    chip.className = 'bet-chip' + (index === 0 ? ' active' : '');
+
+    if (val === "1/4") {
+        chip.textContent = '1/4';
+    } else if (val === "1/2") {
+        chip.textContent = '1/2';
+    } else if (val === "ALL") {
+        chip.textContent = 'ALL';
+    } else {
+        chip.textContent = '₽' + val;
+    }
+
+    chip.onclick = () => {
+        document.querySelectorAll('.bet-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        selectedBet = val;
+    };
+    betGrid.appendChild(chip);
+});
+
+async function sync() {
+    try {
+        const res = await fetch('/blackjack/sync');
+        const data = await res.json();
+
+        if (data.table_status === 'waiting') {
+            document.getElementById('timerDisplay').style.display = 'block';
+            document.getElementById('dealer-bet-display').textContent = '';
+        } else {
+            document.getElementById('timerDisplay').style.display = 'none';
+        }
+
+        const showDealerCards = data.table_status === 'finished';
+        updateHandDisplay('dealer-hand', data.dealer, 'dealer', !showDealerCards);
+        document.getElementById('dealer-score').innerText = showDealerCards ? calculateScore(data.dealer) : '?';
+
+        const grid = document.getElementById('players-grid');
+        const msg = document.getElementById('table-msg');
+
+        Array.from(grid.children).forEach(node => {
+            const name = node.id.replace('spot-', '');
+            if (!data.players[name]) {
+                node.remove();
+                delete cardCounts[name];
+            }
+        });
+
+        Object.keys(data.players).forEach(name => {
+            let spot = document.getElementById(`spot-${name}`);
+            if (!spot) {
+                spot = document.createElement('div');
+                spot.id = `spot-${name}`;
+                spot.className = `player-spot ${name === myName ? 'active' : ''}`;
+                spot.innerHTML = `
+                    <div class="player-info">
+                        <img src="/avatar/${name}" class="player-avatar" alt="${name}" onerror="this.src='/static/default_avatar.png'">
+                        <div class="score-badge" id="score-${name}">?</div>
+                    </div>
+                    <div class="hand" id="hand-${name}"></div>
+                    <div style="font-weight:bold; margin-top: 5px;">${name}</div>
+                    <div id="bet-${name}" style="color:#ffd700; font-size:12px; font-family:monospace;"></div>
+                `;
+                grid.appendChild(spot);
+            }
+
+            const p = data.players[name];
+
+            spot.classList.remove('win-anim', 'lose-anim');
+
+            const showCards = (name === myName) || (data.table_status === 'finished');
+            updateHandDisplay(`hand-${name}`, p.hand, name, !showCards);
+
+            if (showCards) {
+                document.getElementById(`score-${name}`).innerText = calculateScore(p.hand);
+            } else {
+                document.getElementById(`score-${name}`).innerText = '?';
+            }
+
+            let betDisplay = Math.round(p.bet);
+            document.getElementById(`bet-${name}`).innerText = `₽${betDisplay}${p.done ? ' • {{ t.stand|upper }}' : ''}`;
+        });
+
+        updateControls(data);
+
+    } catch (e) { console.log("Connection lost..."); }
+}
+
+async function playAction(action) {
+    const btns = document.querySelectorAll('.btn');
+    btns.forEach(b => b.style.opacity = '0.5');
+
+    try {
+        await fetch('/blackjack/play', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({action, bet: selectedBet})
+        });
+
+        await sync();
+        await syncGlobalBalance();
+
+    } catch (e) {
+        alert("Network error");
+    } finally {
+        btns.forEach(b => b.style.opacity = '1');
+    }
+}
+
+function updateControls(data) {
+    const myData = data.players[myName];
+    const betArea = document.getElementById('bet-area');
+    const playArea = document.getElementById('play-area');
+    const msg = document.getElementById('table-msg');
+
+    if (data.table_status === 'finished') {
+        msg.innerText = "{{ t.round_finished|upper }}";
+        betArea.style.display = 'none';
+        playArea.style.display = 'none';
+    } else if (data.table_status === 'waiting') {
+        msg.innerText = myData ? "{{ t.waiting_players|upper }}" : "{{ t.place_bet|upper }}";
+        betArea.style.display = myData ? 'none' : 'block';
+        playArea.style.display = 'none';
+    } else if (myData && !myData.done && calculateScore(myData.hand) < 21) {
+        msg.innerText = "{{ t.your_turn|upper }}";
+        betArea.style.display = 'none';
+        playArea.style.display = 'flex';
+    } else {
+        msg.innerText = "{{ t.waiting_players|upper }}...";
+        betArea.style.display = 'none';
+        playArea.style.display = 'none';
+    }
+}
+
+function updateHandDisplay(containerId, hand, storageKey, hideCards) {
+    const container = document.getElementById(containerId);
+
+    if (hand.length < (cardCounts[storageKey] || 0)) {
+        container.innerHTML = '';
+        cardCounts[storageKey] = 0;
+    }
+
+    if (hand.length === 1 && (cardCounts[storageKey] || 0) === 0) {
+        const cardDiv = document.createElement('div');
+        cardDiv.className = 'card';
+        cardDiv.innerText = hand[0];
+        container.appendChild(cardDiv);
+        cardCounts[storageKey] = 1;
+        return;
+    }
+
+    hand.forEach((card, index) => {
+        if (index >= (cardCounts[storageKey] || 0)) {
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'card';
+
+            if (hideCards && card === '?') {
+                cardDiv.classList.add('hidden');
+                cardDiv.innerText = '?';
+            } else if (hideCards) {
+                cardDiv.classList.add('hidden');
+                cardDiv.innerText = '?';
+            } else {
+                cardDiv.innerText = card;
+            }
+
+            container.appendChild(cardDiv);
+        }
+    });
+    cardCounts[storageKey] = hand.length;
+}
+
+function calculateScore(hand) {
+    let score = 0;
+    hand.forEach(c => { 
+        if (c !== '?') {
+            score += parseInt(c); 
+        }
+    });
+    return score;
+}
+
+function showResult(result, dealerScore) {
+    const popup = document.getElementById('resultPopup');
+    const title = document.getElementById('resultTitle');
+    const details = document.getElementById('resultDetails');
+
+    popup.classList.remove('win', 'lose');
+
+    if (result.result === 'bust') {
+        popup.classList.add('lose');
+        title.textContent = '{{ t.bust|upper }}!';
+        details.textContent = `{{ t.score }}: ${result.score} | {{ t.dealer }}: ${dealerScore}`;
+    } else if (result.result === 'lose') {
+        popup.classList.add('lose');
+        title.textContent = '{{ t.loss|upper }}!';
+        details.textContent = `{{ t.score }}: ${result.score} | {{ t.dealer }}: ${dealerScore}`;
+    } else if (result.result === 'draw') {
+        popup.classList.add('win');
+        title.textContent = '{{ t.draw|upper }}!';
+        let displayWin = Math.round(result.win);
+        details.textContent = `{{ t.score }}: ${result.score} | {{ t.win }}: ₽${displayWin}`;
+    } else {
+        popup.classList.add('win');
+        title.textContent = '{{ t.victory|upper }}!';
+        let displayWin = Math.round(result.win);
+        details.textContent = `{{ t.score }}: ${result.score} | {{ t.win }}: ₽${displayWin}`;
+    }
+
+    popup.classList.add('show');
+
+    setTimeout(() => {
+        popup.classList.remove('show');
+    }, 3000);
+}
+
+syncGlobalBalance();
+initSocket();
+</script>
+</body>
+</html>

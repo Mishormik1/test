@@ -1,0 +1,280 @@
+translations = {
+    'en': {
+        # Auth
+        'welcome': 'Welcome',
+        'login': 'Login',
+        'register': 'Register',
+        'username': 'Username',
+        'password': 'Password',
+        'create_account': 'Create Account',
+        'login_account': 'Login to Account',
+        'secure_access': 'Secure Access Gateway',
+        'captcha_instruction': 'Select all correct images',
+        'new_test': 'New Test',
+        'access_granted': 'Access Granted',
+        'connecting': 'Connecting',
+        'registering': 'Registering',
+        'account_created': 'Account Created',
+
+        # Navigation
+        'hub': 'Hub',
+        'back_to_hub': 'Back to Hub',
+        'profile': 'Profile',
+        'logout': 'Logout',
+        'balance': 'Balance',
+        'your_balance': 'Your Balance',
+
+        # Games
+        'place_bet': 'Place Bet',
+        'spin': 'Spin',
+        'hit': 'Hit',
+        'stand': 'Stand',
+        'cash_out': 'Cash Out',
+        'bet_accepted': 'Bet Accepted',
+        'bets_closed': 'Bets Closed',
+        'select_amount': 'Select Amount',
+        'select_team': 'Select Team Color',
+        'auto': 'Auto',
+        'auto_on': 'Auto: ON',
+
+        # Results
+        'win': 'Win',
+        'loss': 'Loss',
+        'draw': 'Draw',
+        'big_win': 'Big Win',
+        'jackpot': 'Jackpot',
+        'bust': 'Bust',
+        'victory': 'Victory',
+        'defeat': 'Defeat',
+        'crash': 'Crash',
+
+        # Profile
+        'game_history': 'Game History',
+        'recent_wins': 'Recent Wins',
+        'player_bets': 'Player Bets',
+        'avatar': 'Avatar',
+        'choose_file': 'Choose File',
+        'upload_avatar': 'Upload Avatar',
+        'security': 'Security',
+        'current_password': 'Current Password',
+        'new_password': 'New Password',
+        'confirm_password': 'Confirm Password',
+        'change_password': 'Change Password',
+        'deposit': 'Deposit',
+        'withdraw': 'Withdraw',
+        'deposit_amount': 'Deposit Amount',
+        'withdraw_amount': 'Withdraw Amount',
+        'language': 'Language',
+        'currency': 'Currency',
+        'settings': 'Settings',
+        'expand_history': 'Expand History',
+        'collapse_history': 'Collapse History',
+        'no_history': 'No game history',
+
+        # Errors
+        'insufficient_funds': 'Insufficient funds',
+        'min_deposit': 'Minimum deposit',
+        'min_withdraw': 'Minimum withdrawal',
+        'account_frozen': 'Your account is frozen. Contact support.',
+        'min_bet_error': 'Minimum bet is $1',
+        'fill_all_fields': 'Fill in all fields',
+        'wrong_password': 'Wrong password',
+        'user_not_found': 'User not found',
+        'user_exists': 'User already exists',
+        'invalid_amount': 'Invalid amount',
+        'wrong_captcha': 'Wrong images selected',
+        'network_error': 'Network error',
+        'error': 'Error',
+
+        # Game specific
+        'waiting': 'Waiting',
+        'running': 'Running',
+        'finished': 'Finished',
+        'timer': 'Timer',
+        'multiplier': 'Multiplier',
+        'dealer': 'Dealer',
+        'score': 'Score',
+        'your_turn': 'Your Turn',
+        'waiting_players': 'Waiting for players',
+        'round_finished': 'Round Finished',
+        'flying': 'Flying',
+        'game_started': 'Game Started',
+        'accept_bets': 'Accepting bets',
+        'total_bets': 'Total bets',
+        'lines': 'Lines',
+
+        # Games names
+        'slots': 'Neo Slots',
+        'rocket': 'Rocket Crash',
+        'blackjack': 'Neo 21',
+        'arena': 'Neo Arena',
+
+        # Descriptions
+        'slots_desc': 'Five-reel slot with unique paylines and neon design. Hit your jackpot!',
+        'rocket_desc': 'Watch the multiplier and eject before the rocket explodes. Risk it all!',
+        'blackjack_desc': 'Classic Blackjack against AI dealer. Get 21 and double your stake.',
+        'arena_desc': 'Dynamic battle of colored balls. Bet on a color and watch the epic fight!',
+
+        # Other
+        'game_hall': 'Game Hall',
+        'online': 'Online',
+        'hot': 'Hot',
+        'classic': 'Classic',
+        'play': 'Play',
+        'system_version': 'System Version',
+        'secured': 'Secured by Encryption',
+
+        # Aviator
+        'aviator': 'Aviator',
+        'aviator_desc': 'Fly between aircraft carriers! Collect multipliers, avoid rockets, and land safely to win!',
+        'take_off': 'Take Off',
+        'in_flight': 'In Flight',
+        'landed': 'Landed',
+        'crashed_water': 'Crashed into Water',
+        'ready_takeoff': 'Ready for takeoff',
+        'distance': 'Distance',
+    },
+    'ru': {
+        # Auth
+        'welcome': 'Добро пожаловать',
+        'login': 'Войти',
+        'register': 'Регистрация',
+        'username': 'Логин',
+        'password': 'Пароль',
+        'create_account': 'Создать Аккаунт',
+        'login_account': 'Войти в Аккаунт',
+        'secure_access': 'Защищенный Вход',
+        'captcha_instruction': 'Выберите все правильные изображения',
+        'new_test': 'Новый Тест',
+        'access_granted': 'Доступ Разрешен',
+        'connecting': 'Подключение',
+        'registering': 'Регистрация',
+        'account_created': 'Аккаунт Создан',
+
+        # Navigation
+        'hub': 'Хаб',
+        'back_to_hub': 'В Хаб',
+        'profile': 'Профиль',
+        'logout': 'Выход',
+        'balance': 'Баланс',
+        'your_balance': 'Ваш Баланс',
+
+        # Games
+        'place_bet': 'Поставить',
+        'spin': 'Крутить',
+        'hit': 'Взять Карту',
+        'stand': 'Остановиться',
+        'cash_out': 'Забрать',
+        'bet_accepted': 'Ставка Принята',
+        'bets_closed': 'Ставки Закрыты',
+        'select_amount': 'Выберите Сумму',
+        'select_team': 'Выберите Цвет Команды',
+        'auto': 'Авто',
+        'auto_on': 'Авто: ВКЛ',
+
+        # Results
+        'win': 'Выигрыш',
+        'loss': 'Проигрыш',
+        'draw': 'Ничья',
+        'big_win': 'Крупный Выигрыш',
+        'jackpot': 'Джекпот',
+        'bust': 'Перебор',
+        'victory': 'Победа',
+        'defeat': 'Поражение',
+        'crash': 'Крах',
+
+        # Profile
+        'game_history': 'История Игр',
+        'recent_wins': 'Последние Выигрыши',
+        'player_bets': 'Ставки Игроков',
+        'avatar': 'Аватар',
+        'choose_file': 'Выберите Файл',
+        'upload_avatar': 'Загрузить Аватар',
+        'security': 'Безопасность',
+        'current_password': 'Текущий Пароль',
+        'new_password': 'Новый Пароль',
+        'confirm_password': 'Подтвердите Пароль',
+        'change_password': 'Сменить Пароль',
+        'deposit': 'Пополнить',
+        'withdraw': 'Вывести',
+        'deposit_amount': 'Сумма Пополнения',
+        'withdraw_amount': 'Сумма Вывода',
+        'language': 'Язык',
+        'currency': 'Валюта',
+        'settings': 'Настройки',
+        'expand_history': 'Развернуть Историю',
+        'collapse_history': 'Свернуть Историю',
+        'no_history': 'История игр пуста',
+
+        # Errors
+        'insufficient_funds': 'Недостаточно средств',
+        'min_deposit': 'Минимальное пополнение',
+        'min_withdraw': 'Минимальный вывод',
+        'account_frozen': 'Ваш аккаунт заморожен. Обратитесь в поддержку.',
+        'min_bet_error': 'Минимальная ставка $1',
+        'fill_all_fields': 'Заполните все поля',
+        'wrong_password': 'Неверный пароль',
+        'user_not_found': 'Пользователь не найден',
+        'user_exists': 'Пользователь уже существует',
+        'invalid_amount': 'Неверная сумма',
+        'wrong_captcha': 'Неверно выбраны изображения',
+        'network_error': 'Ошибка сети',
+        'error': 'Ошибка',
+
+        # Game specific
+        'waiting': 'Ожидание',
+        'running': 'Идет',
+        'finished': 'Завершено',
+        'timer': 'Таймер',
+        'multiplier': 'Множитель',
+        'dealer': 'Дилер',
+        'score': 'Счет',
+        'your_turn': 'Ваш Ход',
+        'waiting_players': 'Ожидание игроков',
+        'round_finished': 'Раунд Завершен',
+        'flying': 'В Полете',
+        'game_started': 'Игра Началась',
+        'accept_bets': 'Прием ставок',
+        'total_bets': 'Всего ставок',
+        'lines': 'Нитей',
+
+        # Games names
+        'slots': 'Нео Слоты',
+        'rocket': 'Ракета',
+        'blackjack': 'Нео 21',
+        'arena': 'Нео Арена',
+
+        # Descriptions
+        'slots_desc': 'Пятибарабанный автомат с уникальными линиями выплат и неоновым дизайном. Сорви свой куш!',
+        'rocket_desc': 'Следи за множителем и успей катапультироваться до того, как ракета взорвется. Рискни всем!',
+        'blackjack_desc': 'Классический Блэкджек против ИИ-дилера. Собери 21 и забери двойную ставку.',
+        'arena_desc': 'Динамичная битва цветных шаров. Сделай ставку на цвет и следи за эпичной схваткой!',
+
+        # Other
+        'game_hall': 'КАЗИК ЗАКРЫТ НА РЕМОНТ!!!',
+        'online': 'Онлайн',
+        'hot': 'Горячее',
+        'classic': 'Классика',
+        'play': 'Играть',
+        'system_version': 'Версия Системы',
+        'secured': 'Защищено Шифрованием',
+
+        # Aviator
+        'aviator': 'Авиатор',
+        'aviator_desc': 'Летай между авианосцами! Собирай множители, избегай ракет и приземляйся безопасно чтобы выиграть!',
+        'take_off': 'Взлёт',
+        'in_flight': 'В Полёте',
+        'landed': 'Приземлился',
+        'crashed_water': 'Упал в Воду',
+        'ready_takeoff': 'Готов к взлёту',
+        'distance': 'Дистанция',
+    }
+}
+
+def get_translation(lang, key):
+    """Получает перевод для ключа"""
+    return translations.get(lang, translations['en']).get(key, key)
+
+def get_all_translations(lang):
+    """Возвращает все переводы для языка"""
+    return translations.get(lang, translations['en'])
