@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><Блог Mishormik></title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="glass-header">
+        <h1>{{ config.title|safe }}</h1>
+        <nav class="category-nav">
+            {% for cat in config.categories %}
+            <button class="nav-btn" data-target="{{ cat.id }}">{{ cat.name }}</button>
+            {% endfor %}
+        </nav>
+    </header>
+    
+    <main class="content-stream">
+        {% for card in config.cards %}
+        <section class="info-section" id="section-{{ card.category }}">
+            <div class="section-image">
+                <img src="{{ url_for('static', filename=card.image) }}" alt="{{ card.title }}">
+            </div>
+            <div class="section-text">
+                <span class="badge">{{ card.category }}</span>
+                <h2>{{ card.title|safe }}</h2>
+                <p class="lead">{{ card.description|safe }}</p>
+                <div class="details-grid">
+                    {% for d in card.details %}
+                    <div class="detail-box">
+                        <h4>{{ d.title|safe }}</h4>
+                        <p>{{ d.text|safe }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+        {% endfor %}
+    </main>
+
+    <div id="chat-container">
+        <div id="chat-window" class="chat-hidden">
+            <div class="chat-header">Вопросы автору</div>
+            <div id="chat-messages"></div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Напишите мне">
+                <button id="chat-send">➤</button>
+            </div>
+        </div>
+        <button id="chat-toggle">💬</button>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

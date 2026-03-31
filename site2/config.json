@@ -1,0 +1,62 @@
+{
+    "title": "Блог: %bMishormik (Данил Оболкин)%0",
+    "categories": [
+        {"id": "December 25 2025", "name": "December 25 2025"},
+        {"id": "December 24 2025", "name": "December 24 2025"},
+        {"id": "December 3 2025", "name": "December 3 2025"},
+        {"id": "November 6 2025", "name": "November 6 2025"},
+        {"id": "October 25 2025", "name": "October 25 2025"},
+        {"id": "August 27 2025", "name": "August 27 2025"}
+    ],
+    "cards": [
+        {
+            "category": "December 25 2025",
+            "image": "images/photo_2026-03-18_00-06-21.jpg",
+            "title": "Постер к игре GraveDigger",
+            "description": "Мини постер к игре которую делаю",
+            "details": [{"title": "P.S", "text": "По срокам выхода я пока не знаю"}]
+        },
+        {
+            "category": "December 24 2025",
+            "image": "images/photo_2026-03-18_00-06-28.jpg",
+            "title": "Сделал модель елки",
+            "description": "Остались игрушки и герлянда",
+            "details": [{"title": "P.S", "text": "Всех с наступающим"}]
+        },
+        {
+            "category": "December 3 2025",
+            "image": "images/photo_2026-03-18_00-06-35.jpg",
+            "title": "Сижу делаю игру",
+            "description": "Ну пока что мне нравиться что выходит, но работы еще много",
+            "details": [{"title": "P.S", "text": "Выйдет в 2026 году"}]
+        },
+        {
+            "category": "November 6 2025",
+            "image": "images/photo_2026-03-18_00-07-02.jpg",
+            "title": "Обновил пк",
+            "description": "Вроде выглядит красиво",
+            "details": [{"title": "P.S", "text": "Успел до поднятия цен и кайфую"}]
+        },
+        {
+            "category": "October 25 2025",
+            "image": "images/photo_2026-03-18_00-07-12.jpg",
+            "title": "Возвращаюсь домой",
+            "description": "Опять пришлось разбирать пк",
+            "details": [{"title": "P.S", "text": "Хз что написать"}]
+        },
+        {
+            "category": "August 27 2025",
+            "image": "images/photo_2026-03-18_00-07-25.jpg",
+            "title": "В аеропорту",
+            "description": "Видеокарта не влазиет, пришлось везти в руках, страшно подумать что о моем грузе подумали сотрудники на контрольном пункте",
+            "details": [{"title": "P.S", "text": "Главно чтоб не задержали"}]
+        },
+        {
+            "category": "August 27 2025",
+            "image": "images/photo_2026-03-18_00-07-31.jpg",
+            "title": "Разобрал пк и повезу в самолете",
+            "description": "Крч собрался в поездку к девушке",
+            "details": [{"title": "P.S", "text": "А корпус не поедет"}]
+        }
+    ]
+}

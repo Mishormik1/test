@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Админка</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body style="padding: 50px;">
+    <h2>Админка</h2>
+    <div id="chat-window" style="display: flex; width: 600px; height: 500px;">
+        <div id="chat-messages" style="flex: 1;"></div>
+        <div id="chat-input-area">
+            <input type="text" id="chat-input" style="width: 80%">
+            <button id="send-btn">Ответить</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <script>
+        const socket = io();
+        const input = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-btn');
+        const msgContainer = document.getElementById('chat-messages');
+
+        sendBtn.onclick = () => {
+            socket.emit('admin_message', { text: input.value });
+            input.value = '';
+        };
+
+        socket.on('new_message', (data) => {
+            const div = document.createElement('div');
+            div.className = `msg ${data.sender}`;
+            div.innerText = `${data.sender}: ${data.text}`;
+            msgContainer.appendChild(div);
+        });
+    </script>
+</body>
+</html>
